@@ -1,6 +1,6 @@
-# openid-connect-rs
+# sso-rs
 
-An implement of OpenID Connect in Rust.
+An implement of SSO (OpenID Connect Provider) in Rust.
 
 ---
 
