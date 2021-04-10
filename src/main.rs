@@ -1,28 +1,26 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+mod db;
+mod route;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+use std::net::SocketAddr;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
+#[tokio::main]
+async fn main() {
+    dotenv::dotenv().ok();
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "sso_rs=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    let app = route::get_app().await;
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+
+    println!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }

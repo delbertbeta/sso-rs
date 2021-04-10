@@ -1,12 +1,20 @@
 [package]
-name = "openid-connect-rs"
+name = "sso-rs"
 version = "0.1.0"
 authors = ["delbertbeta <delbertbeta@live.com>"]
-edition = "2018"
+edition = "2021"
+
+[workspace]
+members = [".", "entity", "migration"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-actix-web = "3"
-diesel = { version = "1.4.4", features = ["sqlite"] }
+axum = { version = "0.4.8" }
+tokio = { version = "1.0", features = ["full"] }
 dotenv = "0.15.0"
+derive_more = "0.99.0"
+uuid = { version = "0.8", features = ["v4"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sea-orm = { version = "^0.6", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros" ], default-features = false }
+entity = { path = "entity" }
+migration = { path = "migration" }
