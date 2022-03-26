@@ -15,6 +15,8 @@ dotenv = "0.15.0"
 derive_more = "0.99.0"
 uuid = { version = "0.8", features = ["v4"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = { version = "0.1" }
 sea-orm = { version = "^0.6", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros" ], default-features = false }
 entity = { path = "entity" }
 migration = { path = "migration" }
+tower-http = { version = "0.2.0", features = ["trace"] }
