@@ -1,5 +1,10 @@
+#[macro_use]
+mod custom_macro;
 mod db;
+mod error;
+mod response;
 mod route;
+mod util;
 
 use std::net::SocketAddr;
 use tracing;

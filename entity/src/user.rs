@@ -13,20 +13,18 @@ pub struct Model {
     pub face_url: Option<String>,
     pub nickname: String,
     pub password_hash: String,
+    pub salt: String,
     pub self_info: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::rsa::Entity")]
-    Rsa,
-}
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {}
 
-impl Related<super::rsa::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Rsa.def()
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        panic!("No RelationDef")
     }
 }
 

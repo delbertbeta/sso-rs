@@ -3,6 +3,5 @@ pub use sea_orm;
 
 pub mod prelude;
 
-pub mod rsa;
 pub mod seaql_migrations;
 pub mod user;

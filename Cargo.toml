@@ -19,4 +19,12 @@ tracing = { version = "0.1" }
 sea-orm = { version = "^0.6", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros" ], default-features = false }
 entity = { path = "entity" }
 migration = { path = "migration" }
-tower-http = { version = "0.2.0", features = ["trace"] }
+tower-http = { version = "0.2.0", features = ["trace", "cors"] }
+serde = { version = "1", features = ["derive"] }
+validator = { version = "0.14.0", features = ["derive", "unic"] }
+pbkdf2 = "0.11.0"
+rand_core = { version = "0.6.3", features = ["std"] }
+chrono = "0.4.19"
+anyhow = "1.0.56"
+
+[features]
