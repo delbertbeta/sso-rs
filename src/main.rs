@@ -1,9 +1,10 @@
 #[macro_use]
 mod custom_macro;
-mod db;
+mod constants;
 mod error;
 mod response;
 mod route;
+mod storage;
 mod util;
 
 use std::net::SocketAddr;

@@ -38,7 +38,8 @@ pub struct RegisterParams {
     nickname: Option<String>,
     #[validate(required, email)]
     email: Option<String>,
-    #[validate(required, length(equal = 32), non_control_character)]
+    // Except a SHA256 hashed string
+    #[validate(required, length(equal = 64), non_control_character)]
     password: Option<String>,
 }
 
@@ -72,11 +73,6 @@ pub async fn handler(
     let mut password_hash_buffer: Vec<u8> = vec![0; password_hash.b64_len() * 8];
 
     let password_hash = password_hash.b64_encode(&mut password_hash_buffer)?;
-
-    // let password_hash_str = match String::from_utf8(password_hash_str) {
-    //     Err(e) => return Err(AppError::UnexpectedError(e.into())),
-    //     Ok(s) => s,
-    // };
 
     let new_user = user::ActiveModel {
         id: NotSet,

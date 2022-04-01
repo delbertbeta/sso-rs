@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use pbkdf2::password_hash::Error as PasswordError;
+use rsa::errors::Error as RsaError;
 use sea_orm::DbErr;
 use validator::ValidationErrors;
 
@@ -16,6 +17,7 @@ pub enum AppError {
     DatabaseError(DbErr),
     ValidationError(ValidationErrors),
     PasswordError(PasswordError),
+    RsaError(RsaError),
     UnexpectedError(AnyError),
 }
 
@@ -24,6 +26,7 @@ impl_from!(DbErr, AppError, DatabaseError);
 impl_from!(PasswordError, AppError, PasswordError);
 impl_from!(ValidationErrors, AppError, ValidationError);
 impl_from!(AnyError, AppError, UnexpectedError);
+impl_from!(RsaError, AppError, RsaError);
 
 #[derive(Debug)]
 pub enum RegisterError {
@@ -38,31 +41,39 @@ impl IntoResponse for AppError {
                 100,
                 "Username has been registered".to_string(),
             ),
+            AppError::ValidationError(err) => {
+                let message = format!("Input validation error: [{}]", err).replace('\n', ", ");
+                (StatusCode::BAD_REQUEST, 101, message)
+            }
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {:?}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    200,
+                    501,
                     "Database error".to_string(),
                 )
-            }
-            AppError::ValidationError(err) => {
-                let message = format!("Input validation error: [{}]", err).replace('\n', ", ");
-                (StatusCode::BAD_REQUEST, 300, message)
             }
             AppError::PasswordError(_) => {
                 tracing::error!("Password error: {:?}", self);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    400,
+                    502,
                     "Internal error".to_string(),
+                )
+            }
+            AppError::RsaError(err) => {
+                tracing::error!("Rsa crypto error: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    503,
+                    "Crypto error".to_string(),
                 )
             }
             AppError::UnexpectedError(err) => {
                 tracing::error!("Unexpected error: {:?}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    401,
+                    500,
                     "Internal error".to_string(),
                 )
             }

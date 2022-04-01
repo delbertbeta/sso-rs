@@ -26,5 +26,10 @@ pbkdf2 = "0.11.0"
 rand_core = { version = "0.6.3", features = ["std"] }
 chrono = "0.4.19"
 anyhow = "1.0.56"
+async-session = "3.0.0"
+async-redis-session = "0.2.2"
+rsa = "0.5.0"
+rand = "0.8.5"
 
-[features]
+[profile.dev.package.num-bigint-dig]
+opt-level = 3

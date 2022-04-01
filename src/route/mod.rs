@@ -1,4 +1,4 @@
-use crate::db::connection;
+use crate::storage::{mysql, session};
 use axum::extract::Extension;
 use axum::{
     routing::{get, post},
@@ -13,7 +13,8 @@ mod api;
 mod hello_world;
 
 pub async fn get_app() -> Router {
-    let conn = connection::connect_db().await;
+    let conn = mysql::get_mysql_db_conn().await;
+    let session_store = session::get_session_store();
 
     let origins = vec![
         "https://sso.delbertbeta.life".parse().unwrap(),
@@ -24,7 +25,9 @@ pub async fn get_app() -> Router {
     Router::new()
         .route("/", get(hello_world::handler))
         .route("/api/auth/register", post(api::auth::register::handler))
+        .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
         .layer(Extension(conn))
+        .layer(Extension(session_store))
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
