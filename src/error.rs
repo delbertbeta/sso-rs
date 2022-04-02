@@ -4,8 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use openssl::error::ErrorStack;
 use pbkdf2::password_hash::Error as PasswordError;
-use rsa::errors::Error as RsaError;
 use sea_orm::DbErr;
 use validator::ValidationErrors;
 
@@ -17,7 +17,7 @@ pub enum AppError {
     DatabaseError(DbErr),
     ValidationError(ValidationErrors),
     PasswordError(PasswordError),
-    RsaError(RsaError),
+    RsaError(ErrorStack),
     UnexpectedError(AnyError),
 }
 
@@ -26,11 +26,14 @@ impl_from!(DbErr, AppError, DatabaseError);
 impl_from!(PasswordError, AppError, PasswordError);
 impl_from!(ValidationErrors, AppError, ValidationError);
 impl_from!(AnyError, AppError, UnexpectedError);
-impl_from!(RsaError, AppError, RsaError);
+impl_from!(ErrorStack, AppError, RsaError);
 
 #[derive(Debug)]
 pub enum RegisterError {
     DuplicatedUsername,
+    InvalidRsaToken,
+    DecryptPasswordError,
+    InvalidPasswordLength,
 }
 
 impl IntoResponse for AppError {
@@ -40,6 +43,21 @@ impl IntoResponse for AppError {
                 StatusCode::BAD_REQUEST,
                 100,
                 "Username has been registered".to_string(),
+            ),
+            AppError::RegisterError(RegisterError::InvalidRsaToken) => (
+                StatusCode::BAD_REQUEST,
+                100,
+                "Invalid Rsa token".to_string(),
+            ),
+            AppError::RegisterError(RegisterError::DecryptPasswordError) => (
+                StatusCode::BAD_REQUEST,
+                100,
+                "Failed to decrypt password".to_string(),
+            ),
+            AppError::RegisterError(RegisterError::InvalidPasswordLength) => (
+                StatusCode::BAD_REQUEST,
+                100,
+                "Password format is invalid".to_string(),
             ),
             AppError::ValidationError(err) => {
                 let message = format!("Input validation error: [{}]", err).replace('\n', ", ");

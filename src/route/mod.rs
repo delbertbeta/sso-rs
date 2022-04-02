@@ -32,6 +32,7 @@ pub async fn get_app() -> Router {
         .layer(
             CorsLayer::new()
                 .allow_origin(Origin::list(origins))
-                .allow_methods(Any),
+                .allow_methods(Any)
+                .allow_headers(Any),
         )
 }

@@ -28,8 +28,10 @@ chrono = "0.4.19"
 anyhow = "1.0.56"
 async-session = "3.0.0"
 async-redis-session = "0.2.2"
-rsa = "0.5.0"
-rand = "0.8.5"
+openssl = "0.10.38"
+base64 = "0.13.0"
 
 [profile.dev.package.num-bigint-dig]
 opt-level = 3
+
+[features]

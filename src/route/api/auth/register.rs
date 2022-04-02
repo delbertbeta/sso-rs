@@ -1,3 +1,5 @@
+use async_redis_session::RedisSessionStore;
+use async_session::{log::trace, SessionStore};
 use axum::{extract::Extension, Json};
 use chrono::prelude::*;
 use entity::user;
@@ -12,7 +14,9 @@ use serde::{Deserialize, Serialize};
 use user::Entity as User;
 use validator::Validate;
 
-use crate::error::RegisterError;
+use crate::{
+    constants::RSA_PRIVATE_KEY_REDIS_KEY, error::RegisterError, util::decrypt_rsa_content,
+};
 use crate::{error::AppError, response::OkResponse};
 
 #[derive(Serialize)]
@@ -38,13 +42,17 @@ pub struct RegisterParams {
     nickname: Option<String>,
     #[validate(required, email)]
     email: Option<String>,
+    #[validate(required, non_control_character)]
+    rsa_token: Option<String>,
+
     // Except a SHA256 hashed string
-    #[validate(required, length(equal = 64), non_control_character)]
+    #[validate(required, non_control_character)]
     password: Option<String>,
 }
 
 pub async fn handler(
     Json(register_params): Json<RegisterParams>,
+    Extension(store): Extension<RedisSessionStore>,
     Extension(conn): Extension<DatabaseConnection>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
     register_params.validate()?;
@@ -53,6 +61,26 @@ pub async fn handler(
     let password = register_params.password.unwrap();
     let email = register_params.email.unwrap();
     let nickname = register_params.nickname.unwrap();
+    let rsa_token = register_params.rsa_token.unwrap();
+
+    let session = store.load_session(rsa_token).await?;
+
+    let private_key = match session {
+        Some(s) => Ok(s.get::<String>(RSA_PRIVATE_KEY_REDIS_KEY).unwrap()),
+        None => Err(RegisterError::InvalidRsaToken),
+    }?;
+
+    let password = decrypt_rsa_content(private_key, password)?;
+
+    if password.is_none() {
+        return Err(RegisterError::DecryptPasswordError.into());
+    }
+
+    let password = password.unwrap();
+
+    if password.len() != 64 {
+        return Err(RegisterError::InvalidPasswordLength.into());
+    }
 
     let user = User::find()
         .filter(user::Column::Username.eq(username.clone()))
