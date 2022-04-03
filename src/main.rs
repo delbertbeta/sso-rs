@@ -2,11 +2,15 @@
 mod custom_macro;
 mod constants;
 mod error;
+mod extractor;
+mod model;
 mod response;
 mod route;
 mod storage;
 mod util;
 
+#[macro_use]
+extern crate lazy_static;
 use std::net::SocketAddr;
 use tracing;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

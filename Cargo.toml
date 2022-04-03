@@ -30,6 +30,10 @@ async-session = "3.0.0"
 async-redis-session = "0.2.2"
 openssl = "0.10.38"
 base64 = "0.13.0"
+http = "0.2.6"
+cookie = "0.16.0"
+url = "2.2.2"
+lazy_static = "1.4.0"
 
 [profile.dev.package.num-bigint-dig]
 opt-level = 3

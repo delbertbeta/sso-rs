@@ -1,23 +1,15 @@
 use async_redis_session::RedisSessionStore;
-use async_session::{log::trace, SessionStore};
 use axum::{extract::Extension, Json};
-use chrono::prelude::*;
-use entity::user;
-use pbkdf2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-    Pbkdf2,
-};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, NotSet, QueryFilter, Set,
-};
+use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
-use user::Entity as User;
 use validator::Validate;
 
 use crate::{
-    constants::RSA_PRIVATE_KEY_REDIS_KEY, error::RegisterError, util::decrypt_rsa_content,
+    error::{AppError, ServiceError},
+    model::user::{CreateUserParams, UserModel},
+    response::OkResponse,
+    util::{decrypt_rsa_content, extract_private_key, hash_password},
 };
-use crate::{error::AppError, response::OkResponse};
 
 #[derive(Serialize)]
 pub struct SuccessResponse {
@@ -42,12 +34,13 @@ pub struct RegisterParams {
     nickname: Option<String>,
     #[validate(required, email)]
     email: Option<String>,
-    #[validate(required, non_control_character)]
-    rsa_token: Option<String>,
 
     // Except a SHA256 hashed string
     #[validate(required, non_control_character)]
     password: Option<String>,
+
+    #[validate(required, non_control_character)]
+    rsa_token: Option<String>,
 }
 
 pub async fn handler(
@@ -63,59 +56,32 @@ pub async fn handler(
     let nickname = register_params.nickname.unwrap();
     let rsa_token = register_params.rsa_token.unwrap();
 
-    let session = store.load_session(rsa_token).await?;
-
-    let private_key = match session {
-        Some(s) => Ok(s.get::<String>(RSA_PRIVATE_KEY_REDIS_KEY).unwrap()),
-        None => Err(RegisterError::InvalidRsaToken),
-    }?;
-
-    let password = decrypt_rsa_content(private_key, password)?;
-
-    if password.is_none() {
-        return Err(RegisterError::DecryptPasswordError.into());
-    }
-
-    let password = password.unwrap();
+    let private_key = extract_private_key(&rsa_token, &store).await?;
+    let password =
+        decrypt_rsa_content(private_key, password)?.ok_or(ServiceError::DecryptPasswordError)?;
 
     if password.len() != 64 {
-        return Err(RegisterError::InvalidPasswordLength.into());
+        return Err(ServiceError::InvalidPasswordLength.into());
     }
 
-    let user = User::find()
-        .filter(user::Column::Username.eq(username.clone()))
-        .one(&conn)
-        .await?;
+    let user_model = UserModel::new(&conn);
+    let user = user_model.find_one_user(&username).await?;
 
     if user.is_some() {
-        return Err(RegisterError::DuplicatedUsername.into());
+        return Err(ServiceError::DuplicatedUsername.into());
     }
 
-    let salt = SaltString::generate(&mut OsRng);
-    let password_vec: Vec<u8> = password.into();
-    let password_hash = Pbkdf2
-        .hash_password(&password_vec, &salt)?
-        .hash
-        .expect("Get hash value failed");
+    let (salt, password_hash) = hash_password(&password, None)?;
 
-    let mut password_hash_buffer: Vec<u8> = vec![0; password_hash.b64_len() * 8];
-
-    let password_hash = password_hash.b64_encode(&mut password_hash_buffer)?;
-
-    let new_user = user::ActiveModel {
-        id: NotSet,
-        username: Set(username),
-        salt: Set(salt.to_string()),
-        email: Set(Some(email)),
-        face_url: NotSet,
-        password_hash: Set(password_hash.to_string()),
-        nickname: Set(nickname),
-        self_info: Set(Some("".to_string())),
-        created_at: Set(Utc::now().naive_utc()),
-        updated_at: Set(Utc::now().naive_utc()),
-    };
-
-    new_user.insert(&conn).await?;
+    user_model
+        .insert_user(CreateUserParams {
+            username,
+            salt,
+            email,
+            nickname,
+            password_hash,
+        })
+        .await?;
 
     Ok(OkResponse::new(SuccessResponse {
         msg: "ok".to_string(),

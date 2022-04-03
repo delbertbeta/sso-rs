@@ -1,5 +1,6 @@
 use anyhow::Error as AnyError;
 use axum::{
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
@@ -13,55 +14,61 @@ use crate::response::ErrorResponse;
 
 #[derive(Debug)]
 pub enum AppError {
-    RegisterError(RegisterError),
+    ServiceError(ServiceError),
     DatabaseError(DbErr),
     ValidationError(ValidationErrors),
     PasswordError(PasswordError),
     RsaError(ErrorStack),
     UnexpectedError(AnyError),
+    JSONError(JsonRejection),
 }
 
-impl_from!(RegisterError, AppError, RegisterError);
+impl_from!(ServiceError, AppError, ServiceError);
 impl_from!(DbErr, AppError, DatabaseError);
 impl_from!(PasswordError, AppError, PasswordError);
 impl_from!(ValidationErrors, AppError, ValidationError);
+impl_from!(JsonRejection, AppError, JSONError);
 impl_from!(AnyError, AppError, UnexpectedError);
 impl_from!(ErrorStack, AppError, RsaError);
 
 #[derive(Debug)]
-pub enum RegisterError {
+pub enum ServiceError {
     DuplicatedUsername,
     InvalidRsaToken,
     DecryptPasswordError,
     InvalidPasswordLength,
+    LoginFailed,
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, code, error_message) = match self {
-            AppError::RegisterError(RegisterError::DuplicatedUsername) => (
+            AppError::ServiceError(ServiceError::DuplicatedUsername) => (
                 StatusCode::BAD_REQUEST,
                 100,
                 "Username has been registered".to_string(),
             ),
-            AppError::RegisterError(RegisterError::InvalidRsaToken) => (
+            AppError::ServiceError(ServiceError::InvalidRsaToken) => (
                 StatusCode::BAD_REQUEST,
-                100,
+                101,
                 "Invalid Rsa token".to_string(),
             ),
-            AppError::RegisterError(RegisterError::DecryptPasswordError) => (
+            AppError::ServiceError(ServiceError::DecryptPasswordError) => (
                 StatusCode::BAD_REQUEST,
-                100,
+                102,
                 "Failed to decrypt password".to_string(),
             ),
-            AppError::RegisterError(RegisterError::InvalidPasswordLength) => (
+            AppError::ServiceError(ServiceError::InvalidPasswordLength) => (
                 StatusCode::BAD_REQUEST,
-                100,
+                103,
                 "Password format is invalid".to_string(),
             ),
+            AppError::ServiceError(ServiceError::LoginFailed) => {
+                (StatusCode::BAD_REQUEST, 104, "Login failed".to_string())
+            }
             AppError::ValidationError(err) => {
                 let message = format!("Input validation error: [{}]", err).replace('\n', ", ");
-                (StatusCode::BAD_REQUEST, 101, message)
+                (StatusCode::BAD_REQUEST, 105, message)
             }
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {:?}", err);
@@ -86,6 +93,10 @@ impl IntoResponse for AppError {
                     503,
                     "Crypto error".to_string(),
                 )
+            }
+            AppError::JSONError(err) => {
+                tracing::warn!("JSON parse error: {:?}", err);
+                (StatusCode::BAD_REQUEST, 503, "Invalid input".to_string())
             }
             AppError::UnexpectedError(err) => {
                 tracing::error!("Unexpected error: {:?}", err);
