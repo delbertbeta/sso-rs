@@ -15,6 +15,7 @@ use validator::Validate;
 use crate::{
     constants::{PARSED_FRONTEND_URL, SESSION_COOKIE_KEY},
     error::{AppError, ServiceError},
+    extractor::user_id_from_session::UserIdFromSession,
     model::user::UserModel,
     response::OkResponse,
     util::{decrypt_rsa_content, extract_private_key, verify_password},
@@ -59,7 +60,7 @@ pub async fn handler(
 
     let user = UserModel::new(&conn);
     let user = user
-        .find_one_user(&username)
+        .find_one_user_by_username(&username)
         .await?
         .ok_or(ServiceError::LoginFailed)?;
 
@@ -68,7 +69,9 @@ pub async fn handler(
     }
 
     let mut session = Session::new();
-    session.insert("id", user.id).unwrap();
+    session
+        .insert("user", UserIdFromSession { user_id: user.id })
+        .unwrap();
 
     session.expire_in(std::time::Duration::from_secs(SESSION_EXPIRES_TIME));
     let token = store.store_session(session).await?.unwrap();

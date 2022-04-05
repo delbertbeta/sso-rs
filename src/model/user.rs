@@ -25,9 +25,16 @@ impl<'a> UserModel<'a> {
         Self(&conn)
     }
 
-    pub async fn find_one_user(&self, username: &str) -> QueryOptionReturnType {
+    pub async fn find_one_user_by_username(&self, username: &str) -> QueryOptionReturnType {
         User::find()
             .filter(user::Column::Username.eq(username.clone()))
+            .one(self.0)
+            .await
+    }
+
+    pub async fn find_one_user_by_id(&self, id: &i32) -> QueryOptionReturnType {
+        User::find()
+            .filter(user::Column::Id.eq(id.clone()))
             .one(self.0)
             .await
     }

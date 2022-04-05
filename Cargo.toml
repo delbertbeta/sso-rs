@@ -9,7 +9,7 @@ members = [".", "entity", "migration"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-axum = { version = "0.4.8" }
+axum = { version = "0.5.1", features = ["headers"] }
 tokio = { version = "1.0", features = ["full"] }
 dotenv = "0.15.0"
 derive_more = "0.99.0"

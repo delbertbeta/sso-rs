@@ -65,7 +65,7 @@ pub async fn handler(
     }
 
     let user_model = UserModel::new(&conn);
-    let user = user_model.find_one_user(&username).await?;
+    let user = user_model.find_one_user_by_username(&username).await?;
 
     if user.is_some() {
         return Err(ServiceError::DuplicatedUsername.into());

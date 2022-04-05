@@ -25,6 +25,7 @@ pub async fn get_app() -> Router {
 
     Router::new()
         .route("/", get(hello_world::handler))
+        .route("/api/user", get(api::user::user::handler))
         .route("/api/auth/register", post(api::auth::register::handler))
         .route("/api/auth/login", post(api::auth::login::handler))
         .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
