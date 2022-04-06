@@ -43,6 +43,10 @@ where
             .await?
             .ok_or(ServiceError::LoginRequired)?;
 
+        if session.is_destroyed() {
+            return Err(ServiceError::LoginRequired.into());
+        }
+
         let user = session
             .get::<UserIdFromSession>("user")
             .ok_or(ServiceError::LoginRequired)?;

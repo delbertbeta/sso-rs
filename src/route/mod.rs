@@ -28,6 +28,7 @@ pub async fn get_app() -> Router {
         .route("/api/user", get(api::user::user::handler))
         .route("/api/auth/register", post(api::auth::register::handler))
         .route("/api/auth/login", post(api::auth::login::handler))
+        .route("/api/auth/logout", post(api::auth::logout::handler))
         .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
         .layer(Extension(conn))
         .layer(Extension(session_store))
