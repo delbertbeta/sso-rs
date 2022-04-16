@@ -1,8 +1,8 @@
 use crate::{
-    cos::signature::{generate_sign_content, object_to_str},
     error::QCloudError,
     http_client::CLIENT_INSTANCE,
     secrets::Secrets,
+    signature::{generate_sign_content, object_to_str, SignAlgorithm},
 };
 use chrono::Utc;
 use hyper::{
@@ -131,7 +131,7 @@ pub async fn get_credential<'a>(
     let obj_str = object_to_str(&params_map);
     let obj_str = format!("POST{}/?{}", STS_DOMAIN, obj_str);
 
-    let signed = generate_sign_content(secrets.secret_key, &obj_str);
+    let signed = generate_sign_content(secrets.secret_key, &obj_str, SignAlgorithm::Base64);
 
     params_map.insert("Signature".to_string(), signed.into());
 
