@@ -5,7 +5,7 @@ authors = ["delbertbeta <delbertbeta@live.com>"]
 edition = "2021"
 
 [workspace]
-members = [".", "entity", "migration"]
+members = [".", "entity", "migration", "qcloud"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
@@ -19,6 +19,7 @@ tracing = { version = "0.1" }
 sea-orm = { version = "^0.6", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros" ], default-features = false }
 entity = { path = "entity" }
 migration = { path = "migration" }
+qcloud = { path = "qcloud" }
 tower-http = { version = "0.2.0", features = ["trace", "cors"] }
 serde = { version = "1", features = ["derive"] }
 validator = { version = "0.14.0", features = ["derive", "unic"] }
