@@ -3,5 +3,6 @@ pub use sea_orm;
 
 pub mod prelude;
 
+pub mod image;
 pub mod seaql_migrations;
 pub mod user;
