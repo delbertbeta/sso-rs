@@ -43,6 +43,7 @@ pub enum ServiceError {
     LoginFailed,
     LoginRequired,
     NotFound,
+    PermissionDenied,
 }
 
 impl IntoResponse for AppError {
@@ -98,6 +99,9 @@ impl IntoResponse for AppError {
                     300,
                     "QCloud error".to_string(),
                 )
+            }
+            AppError::ServiceError(ServiceError::PermissionDenied) => {
+                (StatusCode::FORBIDDEN, 403, "Permission Denied".to_string())
             }
             AppError::PasswordError(_) => {
                 tracing::error!("Password error: {:?}", self);
