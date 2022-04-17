@@ -1,4 +1,4 @@
-use std::env;
+use std::{collections::HashSet, env};
 
 use qcloud::secrets::Secrets;
 use url::Url;
@@ -39,4 +39,6 @@ lazy_static! {
     };
     pub static ref SECRETS: Secrets<'static> =
         Secrets::new(&ENVS.qcloud_secret_id, &ENVS.qcloud_secret_key);
+    pub static ref SUPPORT_IMAGE_TYPE: HashSet<&'static str> =
+        HashSet::from(["gif", "bmp", "jpg", "jpeg", "png", "webp"]);
 }

@@ -28,7 +28,7 @@ pub async fn get_app() -> Router {
         .route("/api/auth/login", post(api::auth::login::handler))
         .route("/api/auth/logout", post(api::auth::logout::handler))
         .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
-        .route("/api/image/token", get(api::image::token::handler))
+        .route("/api/image", post(api::image::post::handler))
         .layer(Extension(conn))
         .layer(Extension(session_store))
         .layer(TraceLayer::new_for_http())
