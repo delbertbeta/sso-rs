@@ -9,7 +9,7 @@ use hyper::{
     body::{aggregate, Buf},
     Body, Method, Request,
 };
-use rand::Rng;
+use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, json};
 use urlencoding;
@@ -57,35 +57,35 @@ pub struct PolicyDescription<'a> {
 #[serde(rename_all(deserialize = "PascalCase"))]
 #[allow(dead_code)]
 pub struct StsCredentialResponse {
-    tmp_secret_id: String,
-    tmp_secret_key: String,
-    token: String,
+    pub tmp_secret_id: String,
+    pub tmp_secret_key: String,
+    pub token: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all(deserialize = "PascalCase"))]
 #[allow(dead_code)]
 pub struct StsSuccessResponse {
-    credentials: StsCredentialResponse,
-    expiration: String,
-    expired_time: u64,
-    request_id: String,
+    pub credentials: StsCredentialResponse,
+    pub expiration: String,
+    pub expired_time: u64,
+    pub request_id: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all(deserialize = "PascalCase"))]
 #[allow(dead_code)]
 pub struct StsErrorResponseInner {
-    code: String,
-    message: String,
+    pub code: String,
+    pub message: String,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all(deserialize = "PascalCase"))]
 #[allow(dead_code)]
 pub struct StsErrorResponse {
-    error: StsErrorResponseInner,
-    request_id: String,
+    pub error: StsErrorResponseInner,
+    pub request_id: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -99,7 +99,7 @@ pub enum StsResponse {
 #[serde(rename_all(deserialize = "PascalCase"))]
 #[allow(dead_code)]
 pub struct StsResponseWrapper {
-    response: StsResponse,
+    pub response: StsResponse,
 }
 
 pub async fn get_credential<'a>(
@@ -108,10 +108,9 @@ pub async fn get_credential<'a>(
     region: &str,
     duration_seconds: usize,
 ) -> Result<StsResponseWrapper, QCloudError> {
-    let mut rng = rand::thread_rng();
     let policy_str = serde_json::to_string(policy).unwrap();
     let action = "GetFederationToken";
-    let nonce: i32 = rng.gen_range(10000..20000);
+    let nonce: i32 = (OsRng.next_u32() % 10000 + 10000) as i32;
     let timestamp = Utc::now().timestamp();
     let encoded_policy = urlencoding::encode(&policy_str).into_owned();
     let mut params_map = json!({
@@ -182,7 +181,6 @@ pub fn get_policy(scope: Vec<PolicyScope>) -> PolicyDescription {
 #[cfg(test)]
 mod tests {
     use super::{get_credential, get_policy};
-    use crate::secrets;
     use std::env;
 
     #[tokio::test]
@@ -194,7 +192,7 @@ mod tests {
         let bucket_name = env::var("IMAGES_BUCKET_NAME").unwrap();
         let bucket_region = env::var("BUCKET_REGION").unwrap();
 
-        let secrets = secrets::Secrets::new(&secret_id, &secret_key);
+        let secrets = crate::secrets::Secrets::new(&secret_id, &secret_key);
 
         let policy = get_policy(vec![(
             "name/cos:PutObject",

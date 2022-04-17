@@ -15,14 +15,14 @@ use std::net::SocketAddr;
 use tracing;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::constants::ENVS;
+
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
 
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "sso_rs=debug,tower_http=trace".into()),
-        ))
+        .with(tracing_subscriber::EnvFilter::new(&ENVS.rust_log))
         .with(tracing_subscriber::fmt::layer())
         .init();
 

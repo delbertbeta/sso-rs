@@ -7,6 +7,7 @@ use axum::{
 };
 use openssl::error::ErrorStack;
 use pbkdf2::password_hash::Error as PasswordError;
+use qcloud::error::QCloudError;
 use sea_orm::DbErr;
 use validator::ValidationErrors;
 
@@ -21,6 +22,7 @@ pub enum AppError {
     RsaError(ErrorStack),
     UnexpectedError(AnyError),
     JSONError(JsonRejection),
+    QCloudError(QCloudError),
 }
 
 impl_from!(ServiceError, AppError, ServiceError);
@@ -30,6 +32,7 @@ impl_from!(ValidationErrors, AppError, ValidationError);
 impl_from!(JsonRejection, AppError, JSONError);
 impl_from!(AnyError, AppError, UnexpectedError);
 impl_from!(ErrorStack, AppError, RsaError);
+impl_from!(QCloudError, AppError, QCloudError);
 
 #[derive(Debug)]
 pub enum ServiceError {
@@ -40,6 +43,7 @@ pub enum ServiceError {
     LoginFailed,
     LoginRequired,
     NotFound,
+    PermissionDenied,
 }
 
 impl IntoResponse for AppError {
@@ -87,6 +91,17 @@ impl IntoResponse for AppError {
                     501,
                     "Database error".to_string(),
                 )
+            }
+            AppError::QCloudError(err) => {
+                tracing::error!("QCloud error: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    300,
+                    "QCloud error".to_string(),
+                )
+            }
+            AppError::ServiceError(ServiceError::PermissionDenied) => {
+                (StatusCode::FORBIDDEN, 403, "Permission Denied".to_string())
             }
             AppError::PasswordError(_) => {
                 tracing::error!("Password error: {:?}", self);

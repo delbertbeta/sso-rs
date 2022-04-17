@@ -1,6 +1,7 @@
 use crate::constants::PARSED_FRONTEND_URL;
 use crate::storage::{mysql, session};
 use axum::extract::Extension;
+use axum::routing::patch;
 use axum::{
     routing::{get, post},
     Router,
@@ -21,8 +22,6 @@ pub async fn get_app() -> Router {
     let front_end_url = PARSED_FRONTEND_URL.to_string();
     let front_end_url = front_end_url.trim_end_matches("/");
 
-    println!("{}", front_end_url);
-
     Router::new()
         .route("/", get(hello_world::handler))
         .route("/api/user", get(api::user::user::handler))
@@ -30,6 +29,8 @@ pub async fn get_app() -> Router {
         .route("/api/auth/login", post(api::auth::login::handler))
         .route("/api/auth/logout", post(api::auth::logout::handler))
         .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
+        .route("/api/image", post(api::image::post::handler))
+        .route("/api/image/:image_id", patch(api::image::patch::handler))
         .layer(Extension(conn))
         .layer(Extension(session_store))
         .layer(TraceLayer::new_for_http())
