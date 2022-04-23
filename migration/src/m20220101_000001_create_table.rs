@@ -14,7 +14,7 @@ pub enum User {
     Email,
     Salt,
     PasswordHash,
-    FaceUrl,
+    FaceId,
     SelfInfo,
     CreatedAt,
     UpdatedAt,
@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
             )
             .col(ColumnDef::new(User::Username).string().not_null())
             .col(ColumnDef::new(User::Email).string())
-            .col(ColumnDef::new(User::FaceUrl).string())
+            .col(ColumnDef::new(User::FaceId).string())
             .col(ColumnDef::new(User::Nickname).string().not_null())
             .col(ColumnDef::new(User::PasswordHash).string().not_null())
             .col(ColumnDef::new(User::Salt).string().not_null())

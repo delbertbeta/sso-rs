@@ -1,4 +1,6 @@
 use crate::m20220101_000001_create_table::User;
+use entity::sea_orm::ConnectionTrait;
+use sea_orm::Statement;
 use sea_schema::migration::{
     prelude::*,
     sea_query::{self},
@@ -51,10 +53,21 @@ impl MigrationTrait for Migration {
             .to_owned();
 
         println!("{:?}", image_table.to_string(MysqlQueryBuilder));
-        manager.create_table(image_table).await
+
+        manager.create_table(image_table).await?;
+
+        let sql = "ALTER TABLE `user` ADD CONSTRAINT `fk-user-face-to-image-id` FOREIGN KEY (`face_id`) REFERENCES `image` (`id`) ON DELETE SET NULL ON UPDATE CASCADE";
+        println!("{}", sql);
+
+        let stmt = Statement::from_string(manager.get_database_backend(), sql.to_owned());
+        manager.get_connection().execute(stmt).await.map(|_| ())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let sql = "ALTER TABLE `user` DROP CONSTRAINT `fk-user-face-to-image-id`";
+        let stmt = Statement::from_string(manager.get_database_backend(), sql.to_owned());
+        manager.get_connection().execute(stmt).await.map(|_| ())?;
+
         manager
             .drop_table(Table::drop().table(Image::Table).to_owned())
             .await

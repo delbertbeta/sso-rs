@@ -60,7 +60,7 @@ pub async fn handler(
 
     let user = UserModel::new(&conn);
     let user = user
-        .find_one_user_by_username(&username)
+        .find_one_user_by_username_no_related(&username)
         .await?
         .ok_or(ServiceError::LoginFailed)?;
 

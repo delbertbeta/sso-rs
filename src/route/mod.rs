@@ -1,14 +1,14 @@
 use crate::constants::PARSED_FRONTEND_URL;
 use crate::storage::{mysql, session};
 use axum::extract::Extension;
-use axum::routing::patch;
 use axum::{
-    routing::{get, post},
+    routing::{get, patch, post},
     Router,
 };
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use http::Method;
 use tower_http::{
-    cors::{Any, CorsLayer, Origin},
+    cors::{CorsLayer, Origin},
     trace::TraceLayer,
 };
 
@@ -25,6 +25,7 @@ pub async fn get_app() -> Router {
     Router::new()
         .route("/", get(hello_world::handler))
         .route("/api/user", get(api::user::user::handler))
+        .route("/api/user", patch(api::user::patch::handler))
         .route("/api/auth/register", post(api::auth::register::handler))
         .route("/api/auth/login", post(api::auth::login::handler))
         .route("/api/auth/logout", post(api::auth::logout::handler))
@@ -37,7 +38,7 @@ pub async fn get_app() -> Router {
         .layer(
             CorsLayer::new()
                 .allow_origin(Origin::exact(front_end_url.parse().unwrap()))
-                .allow_methods(Any)
+                .allow_methods(vec![Method::GET, Method::POST, Method::PATCH])
                 .allow_headers(vec![AUTHORIZATION, ACCEPT, CONTENT_TYPE])
                 .allow_credentials(true),
         )

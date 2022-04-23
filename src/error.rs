@@ -44,6 +44,7 @@ pub enum ServiceError {
     LoginRequired,
     NotFound,
     PermissionDenied,
+    ImageNotFound,
 }
 
 impl IntoResponse for AppError {
@@ -79,6 +80,10 @@ impl IntoResponse for AppError {
             AppError::ServiceError(ServiceError::NotFound) => {
                 let message = format!("Record not found");
                 (StatusCode::NOT_FOUND, 107, message)
+            }
+            AppError::ServiceError(ServiceError::ImageNotFound) => {
+                let message = format!("Image not found");
+                (StatusCode::BAD_REQUEST, 108, message)
             }
             AppError::ValidationError(err) => {
                 let message = format!("Input validation error: [{}]", err).replace('\n', ", ");

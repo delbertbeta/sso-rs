@@ -10,7 +10,7 @@ pub struct Model {
     pub id: i32,
     pub username: String,
     pub email: Option<String>,
-    pub face_url: Option<String>,
+    pub face_id: Option<String>,
     pub nickname: String,
     pub password_hash: String,
     pub salt: String,
@@ -21,7 +21,13 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::image::Entity")]
+    #[sea_orm(
+        belongs_to = "super::image::Entity",
+        from = "Column::FaceId",
+        to = "super::image::Column::Id",
+        on_update = "Cascade",
+        on_delete = "SetNull"
+    )]
     Image,
 }
 

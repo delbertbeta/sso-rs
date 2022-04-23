@@ -15,6 +15,7 @@ pub struct Envs {
     pub cos_bucket_name: String,
     pub qcloud_secret_id: String,
     pub qcloud_secret_key: String,
+    pub cdn_base_url: String,
 }
 
 lazy_static! {
@@ -36,6 +37,7 @@ lazy_static! {
             .expect("QCLOUD_SECRET_ID is not set in .env file"),
         qcloud_secret_key: env::var("QCLOUD_SECRET_KEY")
             .expect("QCLOUD_SECRET_KEY is not set in .env file"),
+        cdn_base_url: env::var("CDN_BASE_URL").expect("CDN_BASE_URL is not set in .env file"),
     };
     pub static ref SECRETS: Secrets<'static> =
         Secrets::new(&ENVS.qcloud_secret_id, &ENVS.qcloud_secret_key);
