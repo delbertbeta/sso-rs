@@ -1,10 +1,6 @@
 use crate::m20220101_000001_create_table::User;
-use entity::sea_orm::ConnectionTrait;
-use sea_orm::Statement;
-use sea_schema::migration::{
-    prelude::*,
-    sea_query::{self},
-};
+use sea_orm::{ConnectionTrait, Statement};
+use sea_orm_migration::prelude::*;
 
 pub struct Migration;
 

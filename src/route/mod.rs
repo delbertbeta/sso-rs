@@ -8,7 +8,7 @@ use axum::{
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use http::Method;
 use tower_http::{
-    cors::{CorsLayer, Origin},
+    cors::{CorsLayer, AllowOrigin},
     trace::TraceLayer,
 };
 
@@ -37,7 +37,7 @@ pub async fn get_app() -> Router {
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
-                .allow_origin(Origin::exact(front_end_url.parse().unwrap()))
+                .allow_origin(AllowOrigin::exact(front_end_url.parse().unwrap()))
                 .allow_methods(vec![Method::GET, Method::POST, Method::PATCH])
                 .allow_headers(vec![AUTHORIZATION, ACCEPT, CONTENT_TYPE])
                 .allow_credentials(true),

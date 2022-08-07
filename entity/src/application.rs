@@ -4,17 +4,16 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "user")]
+#[sea_orm(table_name = "application")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
-    pub username: String,
-    pub email: Option<String>,
-    pub face_id: Option<String>,
-    pub nickname: String,
-    pub password_hash: String,
-    pub salt: String,
-    pub self_info: Option<String>,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: String,
+    pub name: String,
+    pub icon_id: String,
+    pub description: Option<String>,
+    pub homepage_url: String,
+    pub authorization_callback_url: String,
+    pub creator_id: i32,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
@@ -22,30 +21,36 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
+        belongs_to = "super::user::Entity",
+        from = "Column::CreatorId",
+        to = "super::user::Column::Id",
+        on_update = "Cascade",
+        on_delete = "Cascade"
+    )]
+    User,
+    #[sea_orm(
         belongs_to = "super::image::Entity",
-        from = "Column::FaceId",
+        from = "Column::IconId",
         to = "super::image::Column::Id",
         on_update = "Cascade",
-        on_delete = "SetNull"
+        on_delete = "Cascade"
     )]
     Image,
-    #[sea_orm(has_many = "super::application::Entity")]
-    Application,
     #[sea_orm(has_many = "super::application_access_grant::Entity")]
     ApplicationAccessGrant,
     #[sea_orm(has_many = "super::application_secret::Entity")]
     ApplicationSecret,
 }
 
-impl Related<super::image::Entity> for Entity {
+impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Image.def()
+        Relation::User.def()
     }
 }
 
-impl Related<super::application::Entity> for Entity {
+impl Related<super::image::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Application.def()
+        Relation::Image.def()
     }
 }
 

@@ -4,28 +4,34 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "image")]
+#[sea_orm(table_name = "application_secret")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: String,
-    pub path: String,
-    pub uploaded: Option<i8>,
-    pub user_id: i32,
-    pub created_at: DateTime,
+    pub id: i32,
+    pub app_id: String,
+    pub creator_id: i32,
+    pub secret: String,
     pub updated_at: DateTime,
+    pub created_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::user::Entity",
-        from = "Column::UserId",
+        from = "Column::CreatorId",
         to = "super::user::Column::Id",
         on_update = "Cascade",
         on_delete = "Cascade"
     )]
     User,
-    #[sea_orm(has_many = "super::application::Entity")]
+    #[sea_orm(
+        belongs_to = "super::application::Entity",
+        from = "Column::AppId",
+        to = "super::application::Column::Id",
+        on_update = "Cascade",
+        on_delete = "Cascade"
+    )]
     Application,
 }
 

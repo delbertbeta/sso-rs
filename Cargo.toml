@@ -9,33 +9,33 @@ members = [".", "entity", "migration", "qcloud"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-axum = { version = "0.5.1", features = ["headers"] }
-tokio = { version = "1.0", features = ["full"] }
+axum = { version = "0.5.16", features = ["headers"] }
+tokio = { version = "1.21.2", features = ["full"] }
 dotenv = "0.15.0"
-derive_more = "0.99.0"
-uuid = { version = "0.8.2", features = ["v4"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing = { version = "0.1" }
-sea-orm = { version = "^0.6", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros" ], default-features = false }
+derive_more = "0.99.17"
+uuid = { version = "1.2.1", features = ["v4"] }
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing = "0.1.37"
+sea-orm = { version = "^0", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros", "with-chrono" ], default-features = false }
 entity = { path = "entity" }
 migration = { path = "migration" }
 qcloud = { path = "qcloud" }
-tower-http = { version = "0.2.0", features = ["trace", "cors"] }
-serde = { version = "1", features = ["derive"] }
-validator = { version = "0.14.0", features = ["derive", "unic"] }
+tower-http = { version = "0.3.4", features = ["trace", "cors"] }
+serde = { version = "1.0.145", features = ["derive"] }
+validator = { version = "0.16.0", features = ["derive", "unic"] }
 pbkdf2 = "0.11.0"
-rand_core = { version = "0.6.3", features = ["std"] }
-chrono = "0.4.19"
-anyhow = "1.0.56"
+rand_core = { version = "0.6.4", features = ["std"] }
+chrono = "0.4.22"
+anyhow = "1.0.65"
 async-session = "3.0.0"
 async-redis-session = "0.2.2"
-openssl = "0.10.38"
+openssl = "0.10.42"
 base64 = "0.13.0"
-http = "0.2.6"
-cookie = "0.16.0"
-url = "2.2.2"
+http = "0.2.8"
+cookie = "0.16.1"
+url = "2.3.1"
 lazy_static = "1.4.0"
-axum-macros = "0.2.0"
+axum-macros = "0.2.3"
 
 [profile.dev.package.num-bigint-dig]
 opt-level = 3
