@@ -1,98 +1,87 @@
-use anyhow::anyhow;
-use axum::{Extension, Json};
-use chrono::{Duration, Utc};
-use qcloud::sts::{get_credential, get_policy, StsResponse};
+use axum::{extract::Extension, Json};
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 use crate::{
-    constants::{ENVS, SECRETS, SUPPORT_IMAGE_TYPE},
-    error::AppError,
+    error::{AppError, ServiceError},
     extractor::user_id_from_session::UserIdFromSession,
-    model::image::{CreateImageParams, ImageModel},
+    model::{
+        application::{ApplicationModel, CreateApplicationParams},
+        image::ImageModel,
+    },
     response::OkResponse,
 };
 
 #[derive(Serialize)]
-pub struct SuccessResponse {
-    image_path: String,
-    image_id: String,
-    bucket: &'static str,
-    region: &'static str,
-    token: TokenResponse,
-}
-
-#[derive(Serialize)]
-pub struct TokenResponse {
-    tmp_secret_id: String,
-    tmp_secret_key: String,
-    session_token: String,
-    start_time: i64,
-    expired_time: i64,
-}
+pub struct SuccessResponse {}
 
 #[derive(Deserialize, Validate)]
-pub struct PostImageParams {
-    #[validate(custom = "validate_image_type")]
-    image_type: String,
+pub struct CreateApplicationPostParams {
+    #[validate(
+        required,
+        length(min = 1, max = 24),
+        non_control_character,
+        custom(function = "crate::util::validate_padding_string")
+    )]
+    name: Option<String>,
+
+    #[validate(
+        length(min = 1, max = 250),
+        non_control_character,
+        custom(function = "crate::util::validate_padding_string")
+    )]
+    description: Option<String>,
+
+    #[validate(required, url)]
+    homepage_url: Option<String>,
+
+    #[validate(required, url)]
+    authorization_callback_url: Option<String>,
+
+    #[validate(
+        length(equal = 36),
+        non_control_character,
+        custom(function = "crate::util::validate_padding_string")
+    )]
+    icon_id: Option<String>,
 }
 
-fn validate_image_type(image_type: &str) -> Result<(), ValidationError> {
-    if SUPPORT_IMAGE_TYPE.contains(image_type) {
-        return Ok(());
-    }
-    return Err(ValidationError::new("ImageType not support"));
-}
-
-pub async fn handler<'a>(
-    user_id_from_session: UserIdFromSession,
-    Json(post_image_params): Json<PostImageParams>,
+pub async fn handler(
+    Json(create_params): Json<CreateApplicationPostParams>,
     Extension(conn): Extension<DatabaseConnection>,
+    user_id_from_session: UserIdFromSession,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
-    post_image_params.validate()?;
+    create_params.validate()?;
 
-    let image = ImageModel::new(&conn);
+    let name = create_params.name.unwrap();
+    let icon_id = create_params.icon_id.unwrap();
+    let homepage_url = create_params.homepage_url.unwrap();
+    let authorization_callback_url = create_params.authorization_callback_url.unwrap();
+    let description = create_params.description;
+
+    let image_model = ImageModel::new(&conn);
+    let icon = image_model.find_one_image_by_id(&icon_id).await?;
+
+    if icon.is_none() || !(icon.unwrap().uploaded.map_or(false, |v| v == 1)) {
+        return Err(ServiceError::ImageNotFound.into());
+    }
+
+    let application_model = ApplicationModel::new(&conn);
 
     let id = uuid::Uuid::new_v4().to_string();
-    let path = format!("images/{}.{}", id, post_image_params.image_type);
 
-    let policy = get_policy(vec![(
-        "name/cos:PutObject",
-        ENVS.cos_bucket_name.as_str(),
-        ENVS.cos_bucket_region.as_str(),
-        path.as_str(),
-    )
-        .into()]);
-
-    let credential = get_credential(&SECRETS, &policy, &ENVS.cos_bucket_region, 600).await?;
-
-    let credential = match credential.response {
-        StsResponse::Success(res) => res,
-        StsResponse::Error(e) => return Err(anyhow!("{:?}", e).into()),
-    };
-
-    let expire = Utc::now() + Duration::seconds(600);
-
-    image
-        .insert_image(CreateImageParams {
-            user_id: user_id_from_session.user_id,
-            id: &id,
-            path: &path,
+    application_model
+        .insert_application(CreateApplicationParams {
+            id,
+            name,
+            icon_id,
+            description,
+            homepage_url,
+            authorization_callback_url,
+            creator_id: user_id_from_session.user_id,
         })
         .await?;
 
-    Ok(OkResponse::new(SuccessResponse {
-        image_id: id,
-        image_path: path,
-        bucket: &ENVS.cos_bucket_name,
-        region: &ENVS.cos_bucket_region,
-        token: TokenResponse {
-            tmp_secret_id: credential.credentials.tmp_secret_id,
-            tmp_secret_key: credential.credentials.tmp_secret_key,
-            session_token: credential.credentials.token,
-            start_time: Utc::now().timestamp(),
-            expired_time: expire.timestamp(),
-        },
-    }))
+    Ok(OkResponse::new(SuccessResponse {}))
 }
