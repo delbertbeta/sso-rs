@@ -8,7 +8,7 @@ use axum::{
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use http::Method;
 use tower_http::{
-    cors::{CorsLayer, AllowOrigin},
+    cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
 
@@ -33,6 +33,10 @@ pub async fn get_app() -> Router {
         .route("/api/image", post(api::image::post::handler))
         .route("/api/image/:image_id", patch(api::image::patch::handler))
         .route("/api/application/", post(api::application::post::handler))
+        .route(
+            "/api/application/",
+            get(api::application::get_list::handler),
+        )
         .layer(Extension(conn))
         .layer(Extension(session_store))
         .layer(TraceLayer::new_for_http())
