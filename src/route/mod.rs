@@ -34,7 +34,7 @@ pub async fn get_app() -> Router {
         .route("/api/image/:image_id", patch(api::image::patch::handler))
         .route("/api/application/", post(api::application::post::handler))
         .route(
-            "/api/application/",
+            "/api/application",
             get(api::application::get_list::handler),
         )
         .layer(Extension(conn))
