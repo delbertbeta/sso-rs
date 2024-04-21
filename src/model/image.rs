@@ -25,7 +25,7 @@ impl<'a> ImageModel<'a> {
 
     pub async fn find_one_image_by_id(&self, id: &str) -> QueryOptionReturnType {
         Image::find()
-            .filter(image::Column::Id.eq(id.clone()))
+            .filter(image::Column::Id.eq(id))
             .one(self.0)
             .await
     }

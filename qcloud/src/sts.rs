@@ -5,10 +5,8 @@ use crate::{
     signature::{generate_sign_content, object_to_str, SignAlgorithm},
 };
 use chrono::Utc;
-use hyper::{
-    body::{aggregate, Buf},
-    Body, Method, Request,
-};
+use http_body_util::{BodyExt, Full};
+use hyper::{Method, Request, body::Buf};
 use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, json};
@@ -139,12 +137,12 @@ pub async fn get_credential<'a>(
         .uri(format!("https://{}/", STS_DOMAIN))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("Host", STS_DOMAIN)
-        .body(Body::from(serde_urlencoded::to_string(params_map).unwrap()))
+        .body(Full::from(serde_urlencoded::to_string(params_map).unwrap()))
         .unwrap();
 
     let res = CLIENT_INSTANCE.request(request).await?;
 
-    let body = aggregate(res).await?;
+    let body = res.collect().await?.aggregate();
 
     let res = serde_json::from_reader(body.reader())?;
 

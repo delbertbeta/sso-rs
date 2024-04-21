@@ -36,9 +36,9 @@ pub struct PatchUserParams {
 }
 
 pub async fn handler(
-    Json(patch_user_params): Json<PatchUserParams>,
-    user_id_from_session: UserIdFromSession,
     Extension(conn): Extension<DatabaseConnection>,
+    user_id_from_session: UserIdFromSession,
+    Json(patch_user_params): Json<PatchUserParams>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
     patch_user_params.validate()?;
 

@@ -2,9 +2,7 @@ use chrono::Utc;
 use entity::application::{self, ActiveModel, Entity, Model};
 use entity::image::{Entity as ImageEntity, Model as ImageModel};
 use sea_orm::DbErr;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 
 pub struct ApplicationModel<'a>(&'a DatabaseConnection);
 
@@ -40,7 +38,7 @@ impl<'a> ApplicationModel<'a> {
     pub async fn find_one_application_by_id(&self, id: &str) -> QueryOptionReturnType {
         Entity::find()
             .find_also_related(ImageEntity)
-            .filter(application::Column::Id.eq(id.clone()))
+            .filter(application::Column::Id.eq(id))
             .one(self.0)
             .await
     }

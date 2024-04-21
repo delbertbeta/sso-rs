@@ -34,7 +34,7 @@ pub struct TokenResponse {
 
 #[derive(Deserialize, Validate)]
 pub struct PostImageParams {
-    #[validate(custom = "validate_image_type")]
+    #[validate(custom(function = "validate_image_type"))]
     image_type: String,
 }
 
@@ -47,8 +47,8 @@ fn validate_image_type(image_type: &str) -> Result<(), ValidationError> {
 
 pub async fn handler<'a>(
     user_id_from_session: UserIdFromSession,
-    Json(post_image_params): Json<PostImageParams>,
     Extension(conn): Extension<DatabaseConnection>,
+    Json(post_image_params): Json<PostImageParams>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
     post_image_params.validate()?;
 

@@ -44,9 +44,9 @@ pub struct RegisterParams {
 }
 
 pub async fn handler(
-    Json(register_params): Json<RegisterParams>,
     Extension(store): Extension<RedisSessionStore>,
     Extension(conn): Extension<DatabaseConnection>,
+    Json(register_params): Json<RegisterParams>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
     register_params.validate()?;
 

@@ -9,6 +9,11 @@ name = "migration"
 path = "src/lib.rs"
 
 [dependencies]
-sea-orm-migration = { version = "^0", default-features = false, features = [ "sqlx-mysql", "runtime-tokio-native-tls" ] }
+sea-orm-migration = { version = "^0", default-features = false, features = [
+  "sqlx-mysql",
+  "runtime-tokio-native-tls",
+  "cli",
+] }
 async-std = { version = "^1", features = ["attributes", "tokio1"] }
 entity = { path = "../entity" }
+chrono = { version = "0.4.22", features = ["serde"] }

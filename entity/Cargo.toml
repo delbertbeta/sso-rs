@@ -9,5 +9,11 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
-sea-orm = { version = "^0", features = [ "sqlx-mysql", "runtime-tokio-native-tls", "macros", "with-chrono" ], default-features = false }
+sea-orm = { version = "^0", features = [
+  "sqlx-mysql",
+  "runtime-tokio-native-tls",
+  "macros",
+  "with-chrono",
+], default-features = false }
 serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4.22", features = ["serde"] }
