@@ -1,5 +1,6 @@
 use async_redis_session::RedisSessionStore;
 use async_session::SessionStore;
+use base64::prelude::*;
 use openssl::{
     error::ErrorStack,
     rsa::{Padding, Rsa},
@@ -31,7 +32,7 @@ pub fn decrypt_rsa_content(
     let private_key = Rsa::private_key_from_pem(private_key.as_bytes())?;
     let mut buf: Vec<u8> = vec![0; private_key.size() as usize];
 
-    let content = base64::decode(content).unwrap_or(b"".to_vec());
+    let content = BASE64_STANDARD.decode(content).unwrap_or(b"".to_vec());
 
     private_key.private_decrypt(&content, &mut buf, Padding::PKCS1)?;
 
@@ -45,7 +46,7 @@ pub fn decrypt_rsa_content(
 
 pub fn hash_password(password: &String, salt: Option<&String>) -> Result<(String, String), Error> {
     let salt = match salt {
-        Some(salt) => SaltString::new(salt)?,
+        Some(salt) => SaltString::from_b64(salt)?,
         None => SaltString::generate(&mut OsRng),
     };
     let password_vec = password.as_bytes();
@@ -82,4 +83,9 @@ pub async fn extract_private_key(
     }?;
 
     Ok(private_key)
+}
+
+pub fn mask_secret(secret: &String) -> String {
+    let prefix = &secret[0..8];
+    format!("{}{}", prefix, "*".repeat(27))
 }

@@ -44,9 +44,9 @@ pub struct LoginParams {
 pub struct SuccessResponse {}
 
 pub async fn handler(
-    Json(login_params): Json<LoginParams>,
     Extension(store): Extension<RedisSessionStore>,
     Extension(conn): Extension<DatabaseConnection>,
+    Json(login_params): Json<LoginParams>,
 ) -> Result<Response, AppError> {
     login_params.validate()?;
 
@@ -76,7 +76,7 @@ pub async fn handler(
     session.expire_in(std::time::Duration::from_secs(SESSION_EXPIRES_TIME));
     let token = store.store_session(session).await?.unwrap();
 
-    let cookie = Cookie::build(SESSION_COOKIE_KEY, token)
+    let cookie = Cookie::build((SESSION_COOKIE_KEY, token))
         .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
         .path("/")
         .http_only(true)
@@ -84,7 +84,7 @@ pub async fn handler(
         .max_age(cookie::time::Duration::seconds(
             SESSION_EXPIRES_TIME.try_into().unwrap(),
         ))
-        .finish();
+        .build();
 
     let mut headers = HeaderMap::new();
     headers.insert(

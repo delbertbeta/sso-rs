@@ -48,9 +48,9 @@ pub struct CreateApplicationPostParams {
 }
 
 pub async fn handler(
-    Json(create_params): Json<CreateApplicationPostParams>,
     Extension(conn): Extension<DatabaseConnection>,
     user_id_from_session: UserIdFromSession,
+    Json(create_params): Json<CreateApplicationPostParams>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
     create_params.validate()?;
 

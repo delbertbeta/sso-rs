@@ -1,10 +1,10 @@
 use async_redis_session::RedisSessionStore;
 use async_session::{async_trait, SessionStore};
 use axum::{
-    extract::{Extension, FromRequest, RequestParts},
-    headers::Cookie,
-    TypedHeader,
+    extract::{Extension, FromRequestParts},
+    http::request::Parts,
 };
+use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -18,18 +18,18 @@ pub struct UserIdFromSession {
 }
 
 #[async_trait]
-impl<B> FromRequest<B> for UserIdFromSession
+impl<S> FromRequestParts<S> for UserIdFromSession
 where
-    B: Send,
+    S: Send + Sync,
 {
     type Rejection = AppError;
 
-    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let Extension(store) = Extension::<RedisSessionStore>::from_request(req)
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Extension(store) = Extension::<RedisSessionStore>::from_request_parts(parts, state)
             .await
             .expect("`RedisSessionStore` extension missing");
 
-        let cookie = Option::<TypedHeader<Cookie>>::from_request(req)
+        let cookie = Option::<TypedHeader<Cookie>>::from_request_parts(parts, state)
             .await
             .unwrap();
 

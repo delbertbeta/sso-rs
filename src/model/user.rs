@@ -41,7 +41,7 @@ impl<'a> UserModel<'a> {
         username: &str,
     ) -> QueryOptionNoRelatedReturnType {
         User::find()
-            .filter(user::Column::Username.eq(username.clone()))
+            .filter(user::Column::Username.eq(username))
             .one(self.0)
             .await
     }
@@ -56,7 +56,7 @@ impl<'a> UserModel<'a> {
     pub async fn find_one_user_by_username(&self, username: &str) -> QueryOptionReturnType {
         User::find()
             .find_also_related(Image)
-            .filter(user::Column::Username.eq(username.clone()))
+            .filter(user::Column::Username.eq(username))
             .one(self.0)
             .await
     }

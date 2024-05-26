@@ -2,10 +2,9 @@ use async_redis_session::RedisSessionStore;
 use async_session::SessionStore;
 use axum::{
     extract::Extension,
-    headers::Cookie,
     response::{IntoResponse, Response},
-    TypedHeader,
 };
+use axum_extra::{headers::Cookie, TypedHeader};
 use http::{header, HeaderMap, HeaderValue, StatusCode};
 use serde::Serialize;
 
@@ -33,13 +32,13 @@ pub async fn handler(
 
     session.destroy();
 
-    let cookie = cookie::Cookie::build(SESSION_COOKIE_KEY, "logout")
+    let cookie = cookie::Cookie::build((SESSION_COOKIE_KEY, "logout"))
         .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
         .path("/")
         .http_only(true)
         .same_site(cookie::SameSite::Strict)
         .max_age(cookie::time::Duration::seconds(0))
-        .finish();
+        .build();
 
     let mut headers = HeaderMap::new();
     headers.insert(

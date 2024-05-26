@@ -7,4 +7,7 @@ pub enum QCloudError {
 
     #[error(transparent)]
     RequestError(#[from] hyper::Error),
+
+    #[error(transparent)]
+    ClientError(#[from] hyper_util::client::legacy::Error),
 }

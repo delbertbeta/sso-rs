@@ -1,6 +1,7 @@
+use http_body_util::Full;
+use hyper::body::Bytes;
+use hyper::{Method, Request};
 use std::collections::HashMap;
-
-use hyper::{Body, Method, Request};
 
 use crate::{
     secrets::Secrets,
@@ -16,10 +17,10 @@ pub fn generate_request(
     bucket: &str,
     region: &str,
     secrets: &Secrets,
-    body: Option<Body>,
+    body: Option<Full<Bytes>>,
     header_map: Option<HashMap<String, String>>,
     query_params: Option<HashMap<String, String>>,
-) -> Request<Body> {
+) -> Request<Full<Bytes>> {
     let key_time = generate_key_time(600);
     let sign_key = generate_sign_content(secrets.secret_key, &key_time, SignAlgorithm::Hex);
 
@@ -59,5 +60,7 @@ pub fn generate_request(
         request = request.header(key, value);
     }
 
-    request.body(body.unwrap_or(Body::empty())).unwrap()
+    request
+        .body(body.unwrap_or(Full::<Bytes>::new(Bytes::new())))
+        .unwrap()
 }

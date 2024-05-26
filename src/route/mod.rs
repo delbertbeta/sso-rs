@@ -32,10 +32,19 @@ pub async fn get_app() -> Router {
         .route("/api/crypto/rsa", get(api::crypto::rsa::handler))
         .route("/api/image", post(api::image::post::handler))
         .route("/api/image/:image_id", patch(api::image::patch::handler))
-        .route("/api/application/", post(api::application::post::handler))
+        .route("/api/application", post(api::application::post::handler))
+        .route("/api/application", get(api::application::get_list::handler))
         .route(
-            "/api/application",
-            get(api::application::get_list::handler),
+            "/api/application/:application_id",
+            get(api::application::single::handler),
+        )
+        .route(
+            "/api/application/:application_id/secrets",
+            get(api::application::secret::get_list::handler),
+        )
+        .route(
+            "/api/application/:application_id/secrets",
+            post(api::application::secret::create::handler),
         )
         .layer(Extension(conn))
         .layer(Extension(session_store))

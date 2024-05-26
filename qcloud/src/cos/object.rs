@@ -1,4 +1,5 @@
-use hyper::{Body, Method, Response};
+use hyper::body::Incoming;
+use hyper::{Method, Response};
 
 use crate::{error::QCloudError, http_client::CLIENT_INSTANCE, secrets::Secrets};
 
@@ -9,7 +10,7 @@ pub async fn head<'a>(
     bucket: &'a str,
     region: &'a str,
     path: &'a str,
-) -> Result<Response<Body>, QCloudError> {
+) -> Result<Response<Incoming>, QCloudError> {
     let request = generate_request(
         Method::HEAD,
         format!("/{}", &path),

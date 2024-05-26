@@ -4,4 +4,10 @@ An implement of SSO (OpenID Connect Provider) in Rust.
 
 ---
 
-WIP
+#### Development code snippets
+
+- Generate entity
+
+```
+sea-orm-cli generate entity -l -o ./entity/src --with-serde both
+```

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use base64::encode;
+use base64::prelude::*;
 use chrono::Utc;
-use hmacsha1::hmac_sha1;
+use hmac_sha1::hmac_sha1;
 use itertools::Itertools;
 use serde_json::{Map, Value};
 
@@ -20,7 +20,7 @@ pub fn generate_key_time(max_age: i64) -> String {
 pub fn generate_sign_content(secret_key: &str, content: &str, alg: SignAlgorithm) -> String {
     let bin = hmac_sha1(secret_key.as_bytes(), content.as_bytes()).to_vec();
     match alg {
-        SignAlgorithm::Base64 => encode(bin),
+        SignAlgorithm::Base64 => BASE64_STANDARD.encode(bin),
         SignAlgorithm::Hex => hex::encode(bin),
     }
 }
