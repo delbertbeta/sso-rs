@@ -1,5 +1,6 @@
+use crate::constants::ENVS;
 use crate::constants::PARSED_FRONTEND_URL;
-use crate::storage::{mysql, session};
+use async_redis_session::RedisSessionStore;
 use axum::extract::Extension;
 use axum::{
     routing::{get, patch, post},
@@ -7,6 +8,8 @@ use axum::{
 };
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use http::Method;
+use migration::{Migrator, MigratorTrait};
+use sea_orm::DatabaseConnection;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
@@ -15,9 +18,12 @@ use tower_http::{
 mod api;
 mod hello_world;
 
-pub async fn get_app() -> Router {
-    let conn = mysql::get_mysql_db_conn().await;
-    let session_store = session::get_session_store();
+pub async fn get_app(conn: DatabaseConnection, session_store: RedisSessionStore) -> Router {
+    let is_prod = ENVS.prod;
+
+    if is_prod {
+        Migrator::up(&conn, None).await.expect("Migrator up failed");
+    }
 
     let front_end_url = PARSED_FRONTEND_URL.to_string();
     let front_end_url = front_end_url.trim_end_matches("/");

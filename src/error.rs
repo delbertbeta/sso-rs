@@ -10,6 +10,7 @@ use pbkdf2::password_hash::Error as PasswordError;
 use qcloud::error::QCloudError;
 use sea_orm::DbErr;
 use validator::ValidationErrors;
+use volo_grpc::Status;
 
 use crate::response::ErrorResponse;
 
@@ -47,8 +48,14 @@ pub enum ServiceError {
     ImageNotFound,
 }
 
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
+struct ErrorResponseInfo {
+    status: StatusCode,
+    code: i32,
+    error_message: String,
+}
+
+impl AppError {
+    fn get_error_response_info(self) -> ErrorResponseInfo {
         let (status, code, error_message) = match self {
             AppError::ServiceError(ServiceError::DuplicatedUsername) => (
                 StatusCode::BAD_REQUEST,
@@ -137,6 +144,33 @@ impl IntoResponse for AppError {
                 )
             }
         };
+        ErrorResponseInfo {
+            error_message,
+            code,
+            status,
+        }
+    }
+}
+
+impl From<AppError> for Status {
+    fn from(error: AppError) -> Self {
+        let ErrorResponseInfo {
+            code,
+            error_message,
+            status,
+        } = error.get_error_response_info();
+
+        Status::internal(error_message)
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let ErrorResponseInfo {
+            code,
+            error_message,
+            status,
+        } = self.get_error_response_info();
 
         tracing::warn!(
             "Response Error: code {:?}, error message: {:?}",
@@ -144,7 +178,7 @@ impl IntoResponse for AppError {
             error_message
         );
 
-        let body = Json(ErrorResponse::new(code, error_message.to_string()));
+        let body = Json(ErrorResponse::new(code as usize, error_message.to_string()));
 
         (status, body).into_response()
     }
