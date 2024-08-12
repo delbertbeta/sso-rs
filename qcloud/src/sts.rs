@@ -6,7 +6,7 @@ use crate::{
 };
 use chrono::Utc;
 use http_body_util::{BodyExt, Full};
-use hyper::{Method, Request, body::Buf};
+use hyper::{body::Buf, Method, Request};
 use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, json};

@@ -1,4 +1,4 @@
 pub mod application;
+pub mod application_secret;
 pub mod image;
 pub mod user;
-pub mod application_secret;

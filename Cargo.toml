@@ -2,13 +2,20 @@
 name = "sso-rs"
 version = "0.1.0"
 authors = ["delbertbeta <delbertbeta@live.com>"]
-edition = "2021"
+edition.workspace = true
 
 [workspace]
-members = [".", "entity", "migration", "qcloud"]
+members = [".", "entity", "migration", "qcloud", "volo-gen"]
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
+volo-gen = { path = "./volo-gen" }
+
+volo.workspace = true
+volo-grpc.workspace = true
+pilota.workspace = true
+
 axum = { version = "0.7.5" }
 tokio = { version = "1.21.2", features = ["full"] }
 dotenv = "0.15.0"
@@ -31,7 +38,7 @@ validator = { version = "0.18.1", features = ["derive", "unic"] }
 pbkdf2 = { version = "0.12.2", features = ["simple"] }
 rand_core = { version = "0.6.4", features = ["std"] }
 chrono = { version = "0.4.22", features = ["serde"] }
-anyhow = "1.0.65"
+anyhow = { version = "1.0.65", workspace = true }
 async-session = "3.0.0"
 async-redis-session = "0.2.2"
 openssl = "0.10.42"
@@ -47,3 +54,17 @@ axum-extra = { version = "0.9.3", features = ["cookie", "typed-header"] }
 opt-level = 3
 
 [features]
+
+
+[workspace.package]
+edition = "2021"
+
+[workspace.dependencies]
+# we recommend to use the latest framework version for new features and bug fixes
+volo = "*"
+volo-build = "*"
+volo-grpc = "*"
+pilota = "*"
+anyhow = "1"
+futures = "0.3"
+tokio = "1"
