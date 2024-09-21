@@ -3,9 +3,15 @@ entries:
   default:
     filename: volo_gen.rs
     protocol: protobuf
+    repos:
+      rpc-idl:
+        url: https://github.com/delbertbeta/rpc-idl.git
+        ref: main
+        lock: 1c6e58934972668b6ee39adfdabdce466e3d9499
     services:
-    - idl:
-        source: local
-        path: ../idl/user.proto
-        includes:
-        - ../idl
+      - idl:
+          source: git
+          repo: rpc-idl
+          path: idl/sso/user.proto
+          includes:
+            - idl/sso
