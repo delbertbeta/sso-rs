@@ -1,6 +1,7 @@
 use std::{collections::HashSet, env};
 
 use qcloud::secrets::Secrets;
+use tldextract::TldOption;
 use url::Url;
 
 pub const SESSION_COOKIE_KEY: &str = "delbertbeta-s-sso";
@@ -22,6 +23,25 @@ lazy_static! {
     pub static ref PARSED_FRONTEND_URL: Url = {
         let front_end_url = std::env::var("FRONT_END_URL").expect("FRONT_END_URL not defined");
         Url::parse(&front_end_url).expect("FRONT_END_URL is invalid")
+    };
+    pub static ref ROOT_DOMAIN: String = {
+        let domain_extractor = TldOption::default().build();
+        let extracted_domain = domain_extractor
+            .extract(
+                PARSED_FRONTEND_URL
+                    .domain()
+                    .expect("FRONT_END_URL is invalid"),
+            )
+            .expect("FRONT_END_URL parse error");
+        format!(
+            "{}.{}",
+            extracted_domain
+                .domain
+                .expect("FRONT_END_URL has not main domain"),
+            extracted_domain
+                .suffix
+                .expect("FRONT_END_URL has not suffix")
+        )
     };
     pub static ref ENVS: Envs = Envs {
         database_url: env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file"),

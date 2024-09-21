@@ -49,6 +49,7 @@ url = "2.3.1"
 lazy_static = "1.4.0"
 axum-macros = "0.4.1"
 axum-extra = { version = "0.9.3", features = ["cookie", "typed-header"] }
+tldextract = "0.6.0"
 
 [profile.dev.package.num-bigint-dig]
 opt-level = 3
