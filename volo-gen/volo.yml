@@ -7,11 +7,11 @@ entries:
       rpc-idl:
         url: https://github.com/delbertbeta/rpc-idl.git
         ref: main
-        lock: eda6b79c63fd14920beb98c45f85d4e1dead7881
+        lock: 1c6e58934972668b6ee39adfdabdce466e3d9499
     services:
-    - idl:
-        source: git
-        repo: rpc-idl
-        path: idl/sso/user.proto
-        includes:
-        - idl/sso
+      - idl:
+          source: git
+          repo: rpc-idl
+          path: idl/sso/user.proto
+          includes:
+            - idl/sso
