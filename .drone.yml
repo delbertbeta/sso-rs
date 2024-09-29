@@ -1,0 +1,39 @@
+---
+kind: pipeline
+type: ssh
+name: Deploy
+
+trigger:
+  event:
+    - custom
+
+server:
+  host:
+    from_secret: deploy_host
+  user:
+    from_secret: deploy_ssh_username
+  password:
+    from_secret: deploy_ssh_password
+
+steps:
+  - name: deploy
+    environment:
+      RPC_EXPOSE_PORT:
+        from_secret: rpc_expose_port
+      HTTP_EXPOSE_PORT:
+        from_secret: http_expose_port
+      ENV_FILE_PATH:
+        from_secret: env_file_path
+    commands:
+      - docker pull delbertbeta/sso-rs:${DRONE_BRANCH}
+      - docker stop sso-rs || true
+      - docker rm sso-rs || true
+      - |-
+        docker run \
+          -d \
+          --restart=always \
+          --name=sso-rs \
+          --publish=$${RPC_EXPOSE_PORT}:2999 \
+          --publish=$${HTTP_EXPOSE_PORT}:3000 \
+          --volume=$${ENV_FILE_PATH}:/.env \
+          delbertbeta/sso-rs:${DRONE_BRANCH}
