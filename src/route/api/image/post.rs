@@ -59,13 +59,13 @@ pub async fn handler<'a>(
 
     let policy = get_policy(vec![(
         "name/cos:PutObject",
-        ENVS.cos_bucket_name.as_str(),
-        ENVS.cos_bucket_region.as_str(),
+        ENVS.bucket_name.as_str(),
+        ENVS.bucket_region.as_str(),
         path.as_str(),
     )
         .into()]);
 
-    let credential = get_credential(&SECRETS, &policy, &ENVS.cos_bucket_region, 600).await?;
+    let credential = get_credential(&SECRETS, &policy, &ENVS.bucket_region, 600).await?;
 
     let credential = match credential.response {
         StsResponse::Success(res) => res,
@@ -85,8 +85,8 @@ pub async fn handler<'a>(
     Ok(OkResponse::new(SuccessResponse {
         image_id: id,
         image_path: path,
-        bucket: &ENVS.cos_bucket_name,
-        region: &ENVS.cos_bucket_region,
+        bucket: &ENVS.bucket_name,
+        region: &ENVS.bucket_region,
         token: TokenResponse {
             tmp_secret_id: credential.credentials.tmp_secret_id,
             tmp_secret_key: credential.credentials.tmp_secret_key,

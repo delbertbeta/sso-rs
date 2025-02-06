@@ -12,10 +12,10 @@ pub struct Envs {
     pub prod: bool,
     pub redis_url: String,
     pub rust_log: String,
-    pub cos_bucket_region: String,
-    pub cos_bucket_name: String,
-    pub qcloud_secret_id: String,
-    pub qcloud_secret_key: String,
+    pub bucket_region: String,
+    pub bucket_name: String,
+    pub bucket_secret_id: String,
+    pub bucket_secret_key: String,
     pub cdn_base_url: String,
 }
 
@@ -49,18 +49,16 @@ lazy_static! {
         redis_url: env::var("REDIS_URL").expect("REDIS_URL is not set in .env file"),
         rust_log: std::env::var("RUST_LOG")
             .unwrap_or_else(|_| "sso_rs=debug,tower_http=trace".into()),
-        cos_bucket_region: env::var("COS_BUCKET_REGION")
-            .expect("COS_BUCKET_REGION is not set in .env file"),
-        cos_bucket_name: env::var("COS_BUCKET_NAME")
-            .expect("COS_BUCKET_NAME is not set in .env file"),
-        qcloud_secret_id: env::var("QCLOUD_SECRET_ID")
-            .expect("QCLOUD_SECRET_ID is not set in .env file"),
-        qcloud_secret_key: env::var("QCLOUD_SECRET_KEY")
-            .expect("QCLOUD_SECRET_KEY is not set in .env file"),
+        bucket_region: env::var("BUCKET_REGION").expect("BUCKET_REGION is not set in .env file"),
+        bucket_name: env::var("BUCKET_NAME").expect("BUCKET_NAME is not set in .env file"),
+        bucket_secret_id: env::var("BUCKET_SECRET_ID")
+            .expect("BUCKET_SECRET_ID is not set in .env file"),
+        bucket_secret_key: env::var("BUCKET_SECRET_KEY")
+            .expect("BUCKET_SECRET_KEY is not set in .env file"),
         cdn_base_url: env::var("CDN_BASE_URL").expect("CDN_BASE_URL is not set in .env file"),
     };
     pub static ref SECRETS: Secrets<'static> =
-        Secrets::new(&ENVS.qcloud_secret_id, &ENVS.qcloud_secret_key);
+        Secrets::new(&ENVS.bucket_secret_id, &ENVS.bucket_secret_key);
     pub static ref SUPPORT_IMAGE_TYPE: HashSet<&'static str> =
         HashSet::from(["gif", "bmp", "jpg", "jpeg", "png", "webp"]);
 }

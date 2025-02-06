@@ -44,8 +44,8 @@ pub async fn handler(
 
     let res = qcloud::cos::object::head(
         &SECRETS,
-        &ENVS.cos_bucket_name,
-        &ENVS.cos_bucket_region,
+        &ENVS.bucket_name,
+        &ENVS.bucket_region,
         &image_model.path,
     )
     .await?;
