@@ -1,6 +1,5 @@
 use std::{collections::HashSet, env};
 
-use qcloud::secrets::Secrets;
 use tldextract::TldOption;
 use url::Url;
 
@@ -16,6 +15,7 @@ pub struct Envs {
     pub bucket_name: String,
     pub bucket_secret_id: String,
     pub bucket_secret_key: String,
+    pub bucket_endpoint: String,
     pub cdn_base_url: String,
 }
 
@@ -55,10 +55,10 @@ lazy_static! {
             .expect("BUCKET_SECRET_ID is not set in .env file"),
         bucket_secret_key: env::var("BUCKET_SECRET_KEY")
             .expect("BUCKET_SECRET_KEY is not set in .env file"),
+        bucket_endpoint: env::var("BUCKET_ENDPOINT")
+            .expect("BUCKET_ENDPOINT is not set in .env file"),
         cdn_base_url: env::var("CDN_BASE_URL").expect("CDN_BASE_URL is not set in .env file"),
     };
-    pub static ref SECRETS: Secrets<'static> =
-        Secrets::new(&ENVS.bucket_secret_id, &ENVS.bucket_secret_key);
     pub static ref SUPPORT_IMAGE_TYPE: HashSet<&'static str> =
         HashSet::from(["gif", "bmp", "jpg", "jpeg", "png", "webp"]);
 }

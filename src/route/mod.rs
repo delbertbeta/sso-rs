@@ -1,6 +1,7 @@
 use crate::constants::ENVS;
 use crate::constants::PARSED_FRONTEND_URL;
 use async_redis_session::RedisSessionStore;
+use aws_sdk_s3::Client;
 use axum::extract::Extension;
 use axum::{
     routing::{get, patch, post},
@@ -18,7 +19,7 @@ use tower_http::{
 mod api;
 mod hello_world;
 
-pub async fn get_app(conn: DatabaseConnection, session_store: RedisSessionStore) -> Router {
+pub async fn get_app(conn: DatabaseConnection, session_store: RedisSessionStore, s3_client: Client) -> Router {
     let is_prod = ENVS.prod;
 
     if is_prod {
@@ -54,6 +55,7 @@ pub async fn get_app(conn: DatabaseConnection, session_store: RedisSessionStore)
         )
         .layer(Extension(conn))
         .layer(Extension(session_store))
+        .layer(Extension(s3_client))
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()

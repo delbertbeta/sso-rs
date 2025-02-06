@@ -14,6 +14,7 @@ mod util;
 extern crate lazy_static;
 use crate::constants::ENVS;
 use crate::storage::{mysql, session};
+use storage::s3;
 use tracing;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -31,9 +32,10 @@ async fn main() {
         .init();
 
     let conn = mysql::get_mysql_db_conn().await;
+    let s3_client = s3::get_s3_client().await;
     let session_store = session::get_session_store();
 
-    let app = route::get_app(conn.clone(), session_store.clone()).await;
+    let app = route::get_app(conn.clone(), session_store.clone(), s3_client.clone()).await;
     let addr = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 

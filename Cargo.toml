@@ -5,7 +5,7 @@ authors = ["delbertbeta <delbertbeta@live.com>"]
 edition.workspace = true
 
 [workspace]
-members = [".", "entity", "migration", "qcloud", "volo-gen"]
+members = [".", "entity", "migration", "volo-gen"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -31,7 +31,6 @@ sea-orm = { version = "^0", features = [
 ], default-features = false }
 entity = { path = "entity" }
 migration = { path = "migration" }
-qcloud = { path = "qcloud" }
 tower-http = { version = "0.5.2", features = ["trace", "cors"] }
 serde = { version = "1.0.198", features = ["derive"] }
 validator = { version = "0.18.1", features = ["derive", "unic"] }
@@ -50,6 +49,9 @@ lazy_static = "1.4.0"
 axum-macros = "0.4.1"
 axum-extra = { version = "0.9.3", features = ["cookie", "typed-header"] }
 tldextract = "0.6.0"
+aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.73.0"
+aws-credential-types = { version = "1.2.1", features = ["hardcoded-credentials"] }
 
 [profile.dev.package.num-bigint-dig]
 opt-level = 3
