@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM ubuntu:24.04
 RUN apt update && apt install -y openssl ca-certificates
 COPY ./target/release/sso-rs /sso-rs
 EXPOSE 3000
