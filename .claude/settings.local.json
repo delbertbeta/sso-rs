@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cargo check:*)",
+      "WebSearch",
+      "Bash(cargo build)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

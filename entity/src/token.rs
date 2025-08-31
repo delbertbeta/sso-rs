@@ -4,14 +4,19 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "application_access_grant")]
+#[sea_orm(table_name = "token")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub app_id: String,
+    pub application_id: String,
     pub user_id: i32,
+    #[sea_orm(unique)]
+    pub access_token: String,
+    #[sea_orm(unique)]
+    pub refresh_token: String,
+    #[sea_orm(column_type = "custom(\"LONGTEXT\")")]
     pub scopes: String,
-    pub updated_at: DateTime,
+    pub expires_at: DateTime,
     pub created_at: DateTime,
 }
 
@@ -19,7 +24,7 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::application::Entity",
-        from = "Column::AppId",
+        from = "Column::ApplicationId",
         to = "super::application::Column::Id",
         on_update = "Cascade",
         on_delete = "Cascade"

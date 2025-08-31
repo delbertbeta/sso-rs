@@ -12,22 +12,27 @@ pub struct CreateApplicationParams {
     pub icon_id: String,
     pub description: Option<String>,
     pub homepage_url: String,
-    pub authorization_callback_url: String,
+    pub redirect_uris: String,
+    pub grant_types: String,
     pub creator_id: i32,
 }
 
+#[derive(Debug)]
+#[allow(dead_code)]
 pub struct UpdateApplicationParams {
     pub name: String,
     pub icon_id: String,
     pub description: Option<String>,
     pub homepage_url: String,
-    pub authorization_callback_url: String,
+    pub redirect_uris: String,
 }
 
 type QueryOptionReturnType = Result<Option<(Model, Option<ImageModel>)>, DbErr>;
 type QueryVecReturnType = Result<Vec<(Model, Option<ImageModel>)>, DbErr>;
+#[allow(dead_code)]
 type QueryOptionNoRelatedReturnType = Result<Option<Model>, DbErr>;
 type QueryReturnType = Result<Model, DbErr>;
+#[allow(dead_code)]
 type UpdateReturnType = Result<ActiveModel, DbErr>;
 
 impl<'a> ApplicationModel<'a> {
@@ -58,7 +63,8 @@ impl<'a> ApplicationModel<'a> {
             icon_id: Set(params.icon_id),
             description: Set(params.description),
             homepage_url: Set(params.homepage_url),
-            authorization_callback_url: Set(params.authorization_callback_url),
+            redirect_uris: Set(serde_json::to_string(&vec![params.redirect_uris]).unwrap()),
+            grant_types: Set(serde_json::to_string(&vec![params.grant_types]).unwrap()),
             creator_id: Set(params.creator_id),
             created_at: Set(Utc::now().naive_utc()),
             updated_at: Set(Utc::now().naive_utc()),
@@ -67,6 +73,7 @@ impl<'a> ApplicationModel<'a> {
         new_application.insert(self.0).await
     }
 
+    #[allow(dead_code)]
     pub async fn update_application(
         &self,
         mut active_model: ActiveModel,
@@ -74,7 +81,7 @@ impl<'a> ApplicationModel<'a> {
     ) -> UpdateReturnType {
         active_model.name = Set(params.name);
         active_model.icon_id = Set(params.icon_id);
-        active_model.authorization_callback_url = Set(params.authorization_callback_url);
+        active_model.redirect_uris = Set(serde_json::to_string(&vec![params.redirect_uris]).unwrap());
         active_model.homepage_url = Set(params.homepage_url);
 
         if let Some(description) = params.description {

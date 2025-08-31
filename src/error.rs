@@ -13,6 +13,8 @@ use volo_grpc::Status;
 
 use crate::response::ErrorResponse;
 
+use jsonwebtoken::errors::Error as JwtError;
+
 #[derive(Debug)]
 pub enum AppError {
     ServiceError(ServiceError),
@@ -20,6 +22,7 @@ pub enum AppError {
     ValidationError(ValidationErrors),
     PasswordError(PasswordError),
     RsaError(ErrorStack),
+    JwtError(JwtError),
     UnexpectedError(AnyError),
     JSONError(JsonRejection),
 }
@@ -31,6 +34,7 @@ impl_from!(ValidationErrors, AppError, ValidationError);
 impl_from!(JsonRejection, AppError, JSONError);
 impl_from!(AnyError, AppError, UnexpectedError);
 impl_from!(ErrorStack, AppError, RsaError);
+impl_from!(JwtError, AppError, JwtError);
 
 #[derive(Debug)]
 pub enum ServiceError {
@@ -43,6 +47,9 @@ pub enum ServiceError {
     NotFound,
     PermissionDenied,
     ImageNotFound,
+    InvalidGrant,
+    InvalidClient,
+    InvalidToken,
 }
 
 struct ErrorResponseInfo {
@@ -89,6 +96,15 @@ impl AppError {
                 let message = format!("Image not found");
                 (StatusCode::BAD_REQUEST, 108, message)
             }
+            AppError::ServiceError(ServiceError::InvalidGrant) => {
+                (StatusCode::BAD_REQUEST, 109, "Invalid grant".to_string())
+            }
+            AppError::ServiceError(ServiceError::InvalidClient) => {
+                (StatusCode::BAD_REQUEST, 110, "Invalid client".to_string())
+            }
+            AppError::ServiceError(ServiceError::InvalidToken) => {
+                (StatusCode::UNAUTHORIZED, 111, "Invalid token".to_string())
+            }
             AppError::ValidationError(err) => {
                 let message = format!("Input validation error: [{}]", err).replace('\n', ", ");
                 (StatusCode::BAD_REQUEST, 105, message)
@@ -124,6 +140,10 @@ impl AppError {
                 tracing::warn!("JSON parse error: {:?}", err);
                 (StatusCode::BAD_REQUEST, 503, "Invalid input".to_string())
             }
+            AppError::JwtError(err) => {
+                tracing::warn!("JWT error: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, 504, "JWT error".to_string())
+            }
             AppError::UnexpectedError(err) => {
                 tracing::error!("Unexpected error: {:?}", err);
                 (
@@ -144,9 +164,9 @@ impl AppError {
 impl From<AppError> for Status {
     fn from(error: AppError) -> Self {
         let ErrorResponseInfo {
-            code,
+            code: _,
             error_message,
-            status,
+            status: _,
         } = error.get_error_response_info();
 
         Status::internal(error_message)

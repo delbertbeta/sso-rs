@@ -37,7 +37,7 @@ pub struct CreateApplicationPostParams {
     homepage_url: Option<String>,
 
     #[validate(required, url)]
-    authorization_callback_url: Option<String>,
+    redirect_uris: Option<String>,
 
     #[validate(
         length(equal = 36),
@@ -57,7 +57,7 @@ pub async fn handler(
     let name = create_params.name.unwrap();
     let icon_id = create_params.icon_id.unwrap();
     let homepage_url = create_params.homepage_url.unwrap();
-    let authorization_callback_url = create_params.authorization_callback_url.unwrap();
+    let redirect_uris = create_params.redirect_uris.unwrap();
     let description = create_params.description;
 
     let image_model = ImageModel::new(&conn);
@@ -78,7 +78,8 @@ pub async fn handler(
             icon_id,
             description,
             homepage_url,
-            authorization_callback_url,
+            redirect_uris,
+            grant_types: "authorization_code".to_string(),
             creator_id: user_id_from_session.user_id,
         })
         .await?;

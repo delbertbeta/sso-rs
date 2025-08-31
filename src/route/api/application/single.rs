@@ -31,7 +31,8 @@ pub struct SuccessResponse {
     id: String,
     description: Option<String>,
     homepage_url: String,
-    authorization_callback_url: String,
+    redirect_uris: String,
+    grant_types: String,
 }
 
 pub async fn handler(
@@ -71,7 +72,8 @@ pub async fn handler(
         id: application.id,
         description: application.description,
         homepage_url: application.homepage_url,
-        authorization_callback_url: application.authorization_callback_url,
+        redirect_uris: application.redirect_uris,
+        grant_types: application.grant_types,
     };
 
     Ok(OkResponse::new(res))
