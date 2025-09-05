@@ -37,7 +37,7 @@ validator = { version = "0.18.1", features = ["derive", "unic"] }
 pbkdf2 = { version = "0.12.2", features = ["simple"] }
 rand_core = { version = "0.6.4", features = ["std"] }
 chrono = { version = "0.4.22", features = ["serde"] }
-anyhow = { version = "1.0.65", workspace = true }
+anyhow = { workspace = true }
 async-session = "3.0.0"
 async-redis-session = "0.2.2"
 openssl = "0.10.42"

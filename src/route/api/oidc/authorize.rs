@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use axum::{
-    extract::{Query, State},
+    extract::{Query, Extension},
     response::{IntoResponse, Redirect},
     http::StatusCode,
 };
@@ -10,8 +10,6 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use entity::{application, authorization_code};
-
-use crate::route::AppState;
 
 // A basic error type for this handler
 #[derive(Debug)]
@@ -43,7 +41,7 @@ pub struct AuthorizeQuery {
 }
 
 pub async fn handler(
-    State(state): State<AppState>,
+    Extension(conn): Extension<sea_orm::DatabaseConnection>,
     Query(query): Query<AuthorizeQuery>,
 ) -> Result<impl IntoResponse, AuthError> {
     // Validate response_type is "code"
@@ -54,7 +52,7 @@ pub async fn handler(
     // Fetch the application by client_id
     let app = application::Entity::find()
         .filter(application::Column::Id.eq(query.client_id.clone()))
-        .one(&state.db)
+        .one(&conn)
         .await?
         .ok_or_else(|| AuthError(StatusCode::BAD_REQUEST, "invalid_client".to_string()))?;
 
@@ -84,7 +82,7 @@ pub async fn handler(
         ..Default::default()
     };
 
-    new_code.insert(&state.db).await?;
+    new_code.insert(&conn).await?;
 
     // Construct the redirect URL
     let mut redirect_url = url::Url::parse(&query.redirect_uri)

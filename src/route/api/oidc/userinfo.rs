@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::Extension,
     http::{HeaderMap},
     response::{IntoResponse, Json},
 };
@@ -8,10 +8,10 @@ use serde_json::{json};
 
 use entity::{token, user};
 
-use crate::{error::AppError, route::AppState, error::ServiceError};
+use crate::{error::AppError, error::ServiceError};
 
 pub async fn handler(
-    State(state): State<AppState>,
+    Extension(conn): Extension<sea_orm::DatabaseConnection>,
     headers: HeaderMap,
 ) -> Result<impl IntoResponse, AppError> {
     let auth_header = headers
@@ -29,7 +29,7 @@ pub async fn handler(
 
     let token = token::Entity::find()
         .filter(token::Column::AccessToken.eq(access_token))
-        .one(&state.db)
+        .one(&conn)
         .await?
         .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidToken))?;
 
@@ -38,7 +38,7 @@ pub async fn handler(
     }
 
     let user = token.find_related(user::Entity)
-        .one(&state.db)
+        .one(&conn)
         .await?
         .ok_or_else(|| AppError::ServiceError(ServiceError::NotFound))?;
 

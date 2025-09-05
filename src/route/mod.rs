@@ -2,6 +2,7 @@ use crate::constants::ENVS;
 use crate::constants::PARSED_FRONTEND_URL;
 use async_redis_session::RedisSessionStore;
 use aws_sdk_s3::Client;
+use axum::extract::Extension;
 use axum::{
     routing::{get, patch, post},
     Router,
@@ -20,16 +21,6 @@ mod hello_world;
 
 use crate::route::api::oidc::well_known::OidcKeys;
 
-#[derive(Clone)]
-pub struct AppState {
-    db: DatabaseConnection,
-    #[allow(dead_code)]
-    session_store: RedisSessionStore,
-    #[allow(dead_code)]
-    s3_client: Client,
-    oidc_keys: OidcKeys,
-}
-
 pub async fn get_app(
     conn: DatabaseConnection,
     session_store: RedisSessionStore,
@@ -38,19 +29,10 @@ pub async fn get_app(
     let is_prod = ENVS.prod;
 
     if is_prod {
-        Migrator::up(&conn, None)
-            .await
-            .expect("Migrator up failed");
+        Migrator::up(&conn, None).await.expect("Migrator up failed");
     }
 
     let oidc_keys = OidcKeys::new();
-
-    let app_state = AppState {
-        db: conn,
-        session_store,
-        s3_client,
-        oidc_keys,
-    };
 
     let front_end_url = PARSED_FRONTEND_URL.to_string();
     let front_end_url = front_end_url.trim_end_matches("/");
@@ -77,10 +59,7 @@ pub async fn get_app(
         .route("/api/image", post(api::image::post::handler))
         .route("/api/image/:image_id", patch(api::image::patch::handler))
         .route("/api/application", post(api::application::post::handler))
-        .route(
-            "/api/application",
-            get(api::application::get_list::handler),
-        )
+        .route("/api/application", get(api::application::get_list::handler))
         .route(
             "/api/application/:application_id",
             get(api::application::single::handler),
@@ -93,7 +72,10 @@ pub async fn get_app(
             "/api/application/:application_id/secrets",
             post(api::application::secret::create::handler),
         )
-        .with_state(app_state)
+        .layer(Extension(conn))
+        .layer(Extension(session_store))
+        .layer(Extension(s3_client))
+        .layer(Extension(oidc_keys))
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()

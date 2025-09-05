@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Form, State},
+    extract::{Form, Extension},
     response::{IntoResponse, Json},
 };
 use jsonwebtoken::{encode, Algorithm, Header, EncodingKey};
@@ -14,9 +14,9 @@ use entity::{application, authorization_code, token, user};
 
 use crate::{
     error::{AppError, ServiceError},
-    route::AppState,
     constants::PARSED_FRONTEND_URL,
 };
+use super::well_known::OidcKeys;
 use entity::application_secret;
 
 #[derive(Debug, Deserialize)]
@@ -47,14 +47,15 @@ pub struct Claims {
 }
 
 pub async fn handler(
-    State(state): State<AppState>,
+    Extension(conn): Extension<sea_orm::DatabaseConnection>,
+    Extension(oidc_keys): Extension<OidcKeys>,
     Form(form): Form<TokenRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     if form.grant_type != "authorization_code" {
         return Err(AppError::ServiceError(ServiceError::InvalidGrant));
     }
 
-    let txn = state.db.begin().await?;
+    let txn = conn.begin().await?;
 
     // Fetch and validate the authorization code from the database.
     let auth_code = authorization_code::Entity::find()
@@ -134,7 +135,7 @@ pub async fn handler(
     let id_token = encode(
         &Header::new(Algorithm::RS256),
         &claims,
-        &EncodingKey::from_rsa_pem(&state.oidc_keys.private_key.private_key_to_pem().unwrap()).unwrap(),
+        &EncodingKey::from_rsa_pem(&oidc_keys.private_key.private_key_to_pem().unwrap()).unwrap(),
     )?;
 
     txn.commit().await?;
