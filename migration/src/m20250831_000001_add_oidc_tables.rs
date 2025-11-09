@@ -28,7 +28,12 @@ impl MigrationTrait for Migration {
             .col(ColumnDef::new(AuthorizationCode::Scopes).json().not_null())
             .col(ColumnDef::new(AuthorizationCode::RedirectUri).string().not_null())
             .col(ColumnDef::new(AuthorizationCode::ExpiresAt).date_time().not_null())
-            .col(ColumnDef::new(AuthorizationCode::CreatedAt).date_time().not_null())
+            .col(
+                ColumnDef::new(AuthorizationCode::CreatedAt)
+                    .date_time()
+                    .not_null()
+                    .default(Expr::current_timestamp()),
+            )
             .foreign_key(
                 sea_query::ForeignKey::create()
                     .name("fk-authcode-to-app-id")
@@ -67,7 +72,12 @@ impl MigrationTrait for Migration {
             .col(ColumnDef::new(Token::RefreshToken).string().not_null().unique_key())
             .col(ColumnDef::new(Token::Scopes).json().not_null())
             .col(ColumnDef::new(Token::ExpiresAt).date_time().not_null())
-            .col(ColumnDef::new(Token::CreatedAt).date_time().not_null())
+            .col(
+                ColumnDef::new(Token::CreatedAt)
+                    .date_time()
+                    .not_null()
+                    .default(Expr::current_timestamp()),
+            )
             .foreign_key(
                 sea_query::ForeignKey::create()
                     .name("fk-token-to-app-id")

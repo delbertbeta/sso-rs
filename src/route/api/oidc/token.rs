@@ -8,6 +8,7 @@ use sea_orm::{
     TransactionTrait,
 };
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use uuid::Uuid;
 
 use entity::{application, authorization_code, token, user};
@@ -25,7 +26,8 @@ pub struct TokenRequest {
     code: String,
     redirect_uri: String,
     client_id: String,
-    client_secret: String,
+    client_secret: Option<String>,
+    code_verifier: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -74,6 +76,10 @@ pub async fn handler(
         .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidClient))?;
 
     if app.id != form.client_id {
+        info!(
+            "invalid client_id, expected: {}, actual: {}",
+            app.id, form.client_id
+        );
         return Err(AppError::ServiceError(ServiceError::InvalidClient));
     }
     
@@ -81,20 +87,78 @@ pub async fn handler(
         return Err(AppError::ServiceError(ServiceError::InvalidGrant));
     }
 
+    // PKCE and client secret validation.
+    let pkce_verified = if let Some(code_challenge) = auth_code.code_challenge.as_ref() {
+        let code_verifier = form
+            .code_verifier
+            .as_ref()
+            .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidGrant))?;
+
+        let method = auth_code
+            .code_challenge_method
+            .as_deref()
+            .unwrap_or("plain");
+
+        let transformed_verifier = match method {
+            "S256" => {
+                use sha2::{Digest, Sha256};
+                let mut hasher = Sha256::new();
+                hasher.update(code_verifier.as_bytes());
+                let result = hasher.finalize();
+                base64_url::encode(&result)
+            }
+            "plain" => code_verifier.to_string(),
+            _ => return Err(AppError::ServiceError(ServiceError::InvalidGrant)),
+        };
+
+        if &transformed_verifier != code_challenge {
+            return Err(AppError::ServiceError(ServiceError::InvalidGrant));
+        }
+        true
+    } else {
+        false
+    };
+
     // Delete the authorization code as it's for single-use.
     let _code_to_delete = auth_code.code.clone();
     authorization_code::Entity::delete_by_id(auth_code.code)
         .exec(&txn)
         .await?;
 
-    // Verify the client secret.
-    let app_secret = app.find_related(application_secret::Entity)
-        .one(&txn)
-        .await?
-        .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidClient))?;
+    // Verify the client secret or enforce PKCE for public clients.
+    let app_secret = app.find_related(application_secret::Entity).one(&txn).await?;
 
-    if form.client_secret != app_secret.secret {
-        return Err(AppError::ServiceError(ServiceError::InvalidClient));
+    match app_secret {
+        // Confidential client
+        Some(secret) => {
+            // For confidential clients, we must verify the secret if PKCE was not used.
+            if !pkce_verified {
+                if let Some(provided_secret) = form.client_secret.as_ref() {
+                    if provided_secret != &secret.secret {
+                        info!(
+                            "invalid client_secret, expected: {}, actual: {}",
+                            secret.secret, provided_secret
+                        );
+                        return Err(AppError::ServiceError(ServiceError::InvalidClient));
+                    }
+                } else {
+                    info!("client_secret is required for confidential client when not using PKCE");
+                    return Err(AppError::ServiceError(ServiceError::InvalidClient));
+                }
+            }
+        }
+        // Public client
+        None => {
+            if !pkce_verified {
+                // Public clients must use PKCE
+                return Err(AppError::ServiceError(ServiceError::InvalidGrant));
+            }
+            if form.client_secret.is_some() {
+                info!("public client should not send client_secret");
+                // Public clients must not send a secret
+                return Err(AppError::ServiceError(ServiceError::InvalidClient));
+            }
+        }
     }
     
     // Ensure the user exists.

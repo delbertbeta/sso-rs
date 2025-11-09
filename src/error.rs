@@ -50,6 +50,9 @@ pub enum ServiceError {
     InvalidGrant,
     InvalidClient,
     InvalidToken,
+    UnsupportedResponseType,
+    InvalidRedirectUri,
+    InvalidUriFormat,
 }
 
 struct ErrorResponseInfo {
@@ -105,6 +108,21 @@ impl AppError {
             AppError::ServiceError(ServiceError::InvalidToken) => {
                 (StatusCode::UNAUTHORIZED, 111, "Invalid token".to_string())
             }
+            AppError::ServiceError(ServiceError::UnsupportedResponseType) => (
+                StatusCode::BAD_REQUEST,
+                112,
+                "Unsupported response type".to_string(),
+            ),
+            AppError::ServiceError(ServiceError::InvalidRedirectUri) => (
+                StatusCode::BAD_REQUEST,
+                113,
+                "Invalid redirect URI".to_string(),
+            ),
+            AppError::ServiceError(ServiceError::InvalidUriFormat) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                114,
+                "Invalid redirect URI format".to_string(),
+            ),
             AppError::ValidationError(err) => {
                 let message = format!("Input validation error: [{}]", err).replace('\n', ", ");
                 (StatusCode::BAD_REQUEST, 105, message)

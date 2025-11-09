@@ -24,6 +24,10 @@ lazy_static! {
         let front_end_url = std::env::var("FRONT_END_URL").expect("FRONT_END_URL not defined");
         Url::parse(&front_end_url).expect("FRONT_END_URL is invalid")
     };
+    pub static ref PARSED_BACKEND_URL: Url = {
+        let back_end_url = std::env::var("BACKEND_END_URL").expect("BACKEND_END_URL not defined");
+        Url::parse(&back_end_url).expect("BACKEND_END_URL is invalid")
+    };
     pub static ref ROOT_DOMAIN: String = {
         let domain_extractor = TldOption::default().build();
         let extracted_domain = domain_extractor

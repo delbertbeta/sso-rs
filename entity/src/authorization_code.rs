@@ -14,6 +14,8 @@ pub struct Model {
     pub scopes: String,
     pub redirect_uri: String,
     pub expires_at: DateTime,
+    pub code_challenge: Option<String>,
+    pub code_challenge_method: Option<String>,
     pub created_at: DateTime,
 }
 

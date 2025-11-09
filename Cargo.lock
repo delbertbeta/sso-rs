@@ -912,6 +912,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "base64-url"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5b428e9fb429c6fda7316e9b006f993e6b4c33005e4659339fb5214479dddec"
+dependencies = [
+ "base64 0.22.1",
+]
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4499,6 +4508,7 @@ dependencies = [
  "axum-extra",
  "axum-macros",
  "base64 0.22.1",
+ "base64-url",
  "chrono",
  "cookie",
  "derive_more",
@@ -4515,6 +4525,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "tldextract",
  "tokio",
  "tower-http",

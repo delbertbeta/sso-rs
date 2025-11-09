@@ -9,7 +9,7 @@ use http::{header, HeaderMap, HeaderValue, StatusCode};
 use serde::Serialize;
 
 use crate::{
-    constants::{PARSED_FRONTEND_URL, SESSION_COOKIE_KEY},
+    constants::{PARSED_FRONTEND_URL, ROOT_DOMAIN, SESSION_COOKIE_KEY},
     error::{AppError, ServiceError},
     response::OkResponse,
 };
@@ -35,6 +35,7 @@ pub async fn handler(
     let cookie = cookie::Cookie::build((SESSION_COOKIE_KEY, "logout"))
         .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
         .path("/")
+        .domain(ROOT_DOMAIN.as_str())
         .http_only(true)
         .same_site(cookie::SameSite::Strict)
         .max_age(cookie::time::Duration::seconds(0))

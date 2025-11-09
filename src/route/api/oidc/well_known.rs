@@ -5,7 +5,7 @@ use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
 use serde_json::{json, Value};
 
-use crate::constants::PARSED_FRONTEND_URL;
+use crate::constants::{PARSED_BACKEND_URL, PARSED_FRONTEND_URL};
 
 #[derive(Clone)]
 pub struct OidcKeys {
@@ -47,12 +47,13 @@ pub async fn jwks_handler(Extension(oidc_keys): Extension<OidcKeys>) -> Json<Val
 
 pub async fn openid_configuration_handler() -> Json<Value> {
     let issuer = PARSED_FRONTEND_URL.to_string();
+    let be_url = PARSED_BACKEND_URL.to_string();
     Json(json!({
         "issuer": &issuer,
-        "authorization_endpoint": format!("{}api/oidc/authorize", issuer),
-        "token_endpoint": format!("{}api/oidc/token", issuer),
-        "userinfo_endpoint": format!("{}api/oidc/userinfo", issuer),
-        "jwks_uri": format!("{}.well-known/jwks.json", issuer),
+        "authorization_endpoint": format!("{}auth/login", issuer),
+        "token_endpoint": format!("{}api/oidc/token", be_url),
+        "userinfo_endpoint": format!("{}api/oidc/userinfo", be_url),
+        "jwks_uri": format!("{}.well-known/jwks.json", be_url),
         "response_types_supported": ["code"],
         "subject_types_supported": ["public"],
         "id_token_signing_alg_values_supported": ["RS256"],

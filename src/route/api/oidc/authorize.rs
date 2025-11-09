@@ -1,33 +1,21 @@
+use crate::{
+    error::{AppError, ServiceError},
+    response::OkResponse,
+};
 use std::collections::HashSet;
 
-use axum::{
-    extract::{Query, Extension},
-    response::{IntoResponse, Redirect},
-    http::StatusCode,
-};
+use axum::extract::{Extension, Query};
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json;
 use uuid::Uuid;
 
 use entity::{application, authorization_code};
 
-// A basic error type for this handler
-#[derive(Debug)]
-pub struct AuthError(StatusCode, String);
-
-impl IntoResponse for AuthError {
-    fn into_response(self) -> axum::response::Response {
-        (self.0, self.1).into_response()
-    }
+#[derive(Serialize)]
+pub struct SuccessResponse {
+    redirect_uri: String,
 }
-
-impl From<sea_orm::DbErr> for AuthError {
-    fn from(err: sea_orm::DbErr) -> Self {
-        eprintln!("Database error: {:?}", err);
-        AuthError(StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
-    }
-}
-
 
 #[derive(Debug, Deserialize)]
 pub struct AuthorizeQuery {
@@ -38,15 +26,17 @@ pub struct AuthorizeQuery {
     state: Option<String>,
     #[allow(dead_code)]
     nonce: Option<String>,
+    code_challenge: Option<String>,
+    code_challenge_method: Option<String>,
 }
 
 pub async fn handler(
     Extension(conn): Extension<sea_orm::DatabaseConnection>,
     Query(query): Query<AuthorizeQuery>,
-) -> Result<impl IntoResponse, AuthError> {
+) -> Result<OkResponse<SuccessResponse>, AppError> {
     // Validate response_type is "code"
     if query.response_type != "code" {
-        return Err(AuthError(StatusCode::BAD_REQUEST, "unsupported_response_type".to_string()));
+        return Err(ServiceError::UnsupportedResponseType.into());
     }
 
     // Fetch the application by client_id
@@ -54,45 +44,50 @@ pub async fn handler(
         .filter(application::Column::Id.eq(query.client_id.clone()))
         .one(&conn)
         .await?
-        .ok_or_else(|| AuthError(StatusCode::BAD_REQUEST, "invalid_client".to_string()))?;
+        .ok_or(ServiceError::InvalidClient)?;
 
     // Validate the redirect_uri
     let redirect_uris: HashSet<String> = serde_json::from_str(&app.redirect_uris).unwrap();
     if !redirect_uris.contains(&query.redirect_uri) {
-        return Err(AuthError(StatusCode::BAD_REQUEST, "invalid_redirect_uri".to_string()));
+        return Err(ServiceError::InvalidRedirectUri.into());
     }
 
     // Assume user is authenticated and get user ID (hardcoded for now)
-    let user_id = 1; 
+    let user_id = 1;
 
     // Generate a new authorization code
     let code = Uuid::new_v4().to_string();
 
-    
-// ... (previous code)
+    let scopes: Vec<&str> = query.scope.split(' ').collect();
+    let scopes_json = serde_json::to_value(scopes).unwrap();
 
-// Create and save the authorization_code model
+    // Create and save the authorization_code model
     let new_code = authorization_code::ActiveModel {
         code: Set(code.clone()),
         user_id: Set(user_id),
         application_id: Set(app.id),
-        scopes: Set(query.scope),
+        scopes: Set(scopes_json.to_string()),
         redirect_uri: Set(query.redirect_uri.clone()),
         expires_at: Set(chrono::Utc::now().naive_utc() + chrono::Duration::minutes(10)),
+        code_challenge: Set(query.code_challenge.clone()),
+        code_challenge_method: Set(query.code_challenge_method.clone()),
         ..Default::default()
     };
 
     new_code.insert(&conn).await?;
 
     // Construct the redirect URL
-    let mut redirect_url = url::Url::parse(&query.redirect_uri)
-        .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "invalid redirect_uri format".to_string()))?;
-        
+    let mut redirect_url =
+        url::Url::parse(&query.redirect_uri).map_err(|_| ServiceError::InvalidUriFormat)?;
+
     redirect_url.query_pairs_mut().append_pair("code", &code);
     if let Some(state_val) = query.state {
-        redirect_url.query_pairs_mut().append_pair("state", &state_val);
+        redirect_url
+            .query_pairs_mut()
+            .append_pair("state", &state_val);
     }
 
-    // Return a redirect response
-    Ok(Redirect::to(redirect_url.as_str()))
+    Ok(OkResponse::new(SuccessResponse {
+        redirect_uri: redirect_url.to_string(),
+    }))
 }
