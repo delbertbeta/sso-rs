@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{
+    constants::ENVS,
     error::{AppError, ServiceError},
     model::user::{CreateUserParams, UserModel},
     response::OkResponse,
@@ -48,6 +49,10 @@ pub async fn handler(
     Extension(conn): Extension<DatabaseConnection>,
     Json(register_params): Json<RegisterParams>,
 ) -> Result<OkResponse<SuccessResponse>, AppError> {
+    if ENVS.disable_user_registration {
+        return Err(ServiceError::UserRegistrationDisabled.into());
+    }
+
     register_params.validate()?;
 
     let username = register_params.username.unwrap();

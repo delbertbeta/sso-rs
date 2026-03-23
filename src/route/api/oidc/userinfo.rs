@@ -1,10 +1,10 @@
 use axum::{
     extract::Extension,
-    http::{HeaderMap},
+    http::HeaderMap,
     response::{IntoResponse, Json},
 };
 use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter};
-use serde_json::{json};
+use serde_json::json;
 
 use entity::{token, user};
 
@@ -17,9 +17,7 @@ pub async fn handler(
     let auth_header = headers
         .get("Authorization")
         .and_then(|value| value.to_str().ok())
-        .ok_or_else(|| {
-            AppError::ServiceError(ServiceError::InvalidToken)
-        })?;
+        .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidToken))?;
 
     if !auth_header.starts_with("Bearer ") {
         return Err(AppError::ServiceError(ServiceError::InvalidToken));
@@ -37,7 +35,8 @@ pub async fn handler(
         return Err(AppError::ServiceError(ServiceError::InvalidToken));
     }
 
-    let user = token.find_related(user::Entity)
+    let user = token
+        .find_related(user::Entity)
         .one(&conn)
         .await?
         .ok_or_else(|| AppError::ServiceError(ServiceError::NotFound))?;

@@ -9,6 +9,7 @@ pub const RSA_PRIVATE_KEY_REDIS_KEY: &str = "rsa_private_key";
 pub struct Envs {
     pub database_url: String,
     pub prod: bool,
+    pub disable_user_registration: bool,
     pub redis_url: String,
     pub rust_log: String,
     pub bucket_region: String,
@@ -17,6 +18,15 @@ pub struct Envs {
     pub bucket_secret_key: String,
     pub bucket_endpoint: String,
     pub cdn_base_url: String,
+}
+
+fn env_bool(name: &str) -> bool {
+    env::var(name)
+        .map(|value| {
+            let value = value.trim();
+            value == "1" || value.eq_ignore_ascii_case("true")
+        })
+        .unwrap_or(false)
 }
 
 lazy_static! {
@@ -46,6 +56,7 @@ lazy_static! {
     pub static ref ENVS: Envs = Envs {
         database_url: env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file"),
         prod: env::var("PROD").map_or(false, |_| true),
+        disable_user_registration: env_bool("DISABLE_USER_REGISTRATION"),
         redis_url: env::var("REDIS_URL").expect("REDIS_URL is not set in .env file"),
         rust_log: std::env::var("RUST_LOG")
             .unwrap_or_else(|_| "sso_rs=debug,tower_http=trace".into()),

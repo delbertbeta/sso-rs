@@ -81,7 +81,8 @@ impl<'a> ApplicationModel<'a> {
     ) -> UpdateReturnType {
         active_model.name = Set(params.name);
         active_model.icon_id = Set(params.icon_id);
-        active_model.redirect_uris = Set(serde_json::to_string(&vec![params.redirect_uris]).unwrap());
+        active_model.redirect_uris =
+            Set(serde_json::to_string(&vec![params.redirect_uris]).unwrap());
         active_model.homepage_url = Set(params.homepage_url);
 
         if let Some(description) = params.description {

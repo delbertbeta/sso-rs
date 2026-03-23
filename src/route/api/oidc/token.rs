@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Form, Extension},
+    extract::{Extension, Form},
     response::{IntoResponse, Json},
 };
-use jsonwebtoken::{encode, Algorithm, Header, EncodingKey};
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DbErr, EntityTrait, ModelTrait, QueryFilter, Set,
     TransactionTrait,
@@ -12,11 +12,11 @@ use uuid::Uuid;
 
 use entity::{application, authorization_code, token, user};
 
-use crate::{
-    error::{AppError, ServiceError},
-    constants::PARSED_FRONTEND_URL,
-};
 use super::well_known::OidcKeys;
+use crate::{
+    constants::PARSED_FRONTEND_URL,
+    error::{AppError, ServiceError},
+};
 use entity::application_secret;
 
 #[derive(Debug, Deserialize)]
@@ -68,7 +68,8 @@ pub async fn handler(
         return Err(AppError::ServiceError(ServiceError::InvalidGrant));
     }
 
-    let app = auth_code.find_related(application::Entity)
+    let app = auth_code
+        .find_related(application::Entity)
         .one(&txn)
         .await?
         .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidClient))?;
@@ -76,7 +77,7 @@ pub async fn handler(
     if app.id != form.client_id {
         return Err(AppError::ServiceError(ServiceError::InvalidClient));
     }
-    
+
     if auth_code.redirect_uri != form.redirect_uri {
         return Err(AppError::ServiceError(ServiceError::InvalidGrant));
     }
@@ -88,7 +89,8 @@ pub async fn handler(
         .await?;
 
     // Verify the client secret.
-    let app_secret = app.find_related(application_secret::Entity)
+    let app_secret = app
+        .find_related(application_secret::Entity)
         .one(&txn)
         .await?
         .ok_or_else(|| AppError::ServiceError(ServiceError::InvalidClient))?;
@@ -96,7 +98,7 @@ pub async fn handler(
     if form.client_secret != app_secret.secret {
         return Err(AppError::ServiceError(ServiceError::InvalidClient));
     }
-    
+
     // Ensure the user exists.
     let user = user::Entity::find_by_id(auth_code.user_id.clone())
         .one(&txn)
@@ -117,13 +119,11 @@ pub async fn handler(
         user_id: Set(auth_code.user_id),
         application_id: Set(app.id.clone()),
         scopes: Set(auth_code.scopes),
-        expires_at: Set(
-            expires_at.naive_utc(),
-        ),
+        expires_at: Set(expires_at.naive_utc()),
         ..Default::default()
     };
     new_token.insert(&txn).await?;
-    
+
     let claims = Claims {
         iss: PARSED_FRONTEND_URL.to_string(),
         sub: user.id.to_string(),
@@ -131,7 +131,7 @@ pub async fn handler(
         exp: expires_at.timestamp() as usize,
         iat: now.timestamp() as usize,
     };
-    
+
     let id_token = encode(
         &Header::new(Algorithm::RS256),
         &claims,
@@ -139,7 +139,7 @@ pub async fn handler(
     )?;
 
     txn.commit().await?;
-    
+
     // Construct the JSON response.
     let response = TokenResponse {
         access_token,

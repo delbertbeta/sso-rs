@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use axum::{
-    extract::{Query, Extension},
-    response::{IntoResponse, Redirect},
+    extract::{Extension, Query},
     http::StatusCode,
+    response::{IntoResponse, Redirect},
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use serde::Deserialize;
@@ -24,10 +24,12 @@ impl IntoResponse for AuthError {
 impl From<sea_orm::DbErr> for AuthError {
     fn from(err: sea_orm::DbErr) -> Self {
         eprintln!("Database error: {:?}", err);
-        AuthError(StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+        AuthError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Database error".to_string(),
+        )
     }
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct AuthorizeQuery {
@@ -46,7 +48,10 @@ pub async fn handler(
 ) -> Result<impl IntoResponse, AuthError> {
     // Validate response_type is "code"
     if query.response_type != "code" {
-        return Err(AuthError(StatusCode::BAD_REQUEST, "unsupported_response_type".to_string()));
+        return Err(AuthError(
+            StatusCode::BAD_REQUEST,
+            "unsupported_response_type".to_string(),
+        ));
     }
 
     // Fetch the application by client_id
@@ -59,19 +64,21 @@ pub async fn handler(
     // Validate the redirect_uri
     let redirect_uris: HashSet<String> = serde_json::from_str(&app.redirect_uris).unwrap();
     if !redirect_uris.contains(&query.redirect_uri) {
-        return Err(AuthError(StatusCode::BAD_REQUEST, "invalid_redirect_uri".to_string()));
+        return Err(AuthError(
+            StatusCode::BAD_REQUEST,
+            "invalid_redirect_uri".to_string(),
+        ));
     }
 
     // Assume user is authenticated and get user ID (hardcoded for now)
-    let user_id = 1; 
+    let user_id = 1;
 
     // Generate a new authorization code
     let code = Uuid::new_v4().to_string();
 
-    
-// ... (previous code)
+    // ... (previous code)
 
-// Create and save the authorization_code model
+    // Create and save the authorization_code model
     let new_code = authorization_code::ActiveModel {
         code: Set(code.clone()),
         user_id: Set(user_id),
@@ -85,12 +92,18 @@ pub async fn handler(
     new_code.insert(&conn).await?;
 
     // Construct the redirect URL
-    let mut redirect_url = url::Url::parse(&query.redirect_uri)
-        .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "invalid redirect_uri format".to_string()))?;
-        
+    let mut redirect_url = url::Url::parse(&query.redirect_uri).map_err(|_| {
+        AuthError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "invalid redirect_uri format".to_string(),
+        )
+    })?;
+
     redirect_url.query_pairs_mut().append_pair("code", &code);
     if let Some(state_val) = query.state {
-        redirect_url.query_pairs_mut().append_pair("state", &state_val);
+        redirect_url
+            .query_pairs_mut()
+            .append_pair("state", &state_val);
     }
 
     // Return a redirect response

@@ -39,6 +39,7 @@ impl_from!(JwtError, AppError, JwtError);
 #[derive(Debug)]
 pub enum ServiceError {
     DuplicatedUsername,
+    UserRegistrationDisabled,
     InvalidRsaToken,
     DecryptPasswordError,
     InvalidPasswordLength,
@@ -65,6 +66,11 @@ impl AppError {
                 StatusCode::BAD_REQUEST,
                 100,
                 "Username has been registered".to_string(),
+            ),
+            AppError::ServiceError(ServiceError::UserRegistrationDisabled) => (
+                StatusCode::FORBIDDEN,
+                112,
+                "User registration is disabled".to_string(),
             ),
             AppError::ServiceError(ServiceError::InvalidRsaToken) => (
                 StatusCode::BAD_REQUEST,
@@ -142,7 +148,11 @@ impl AppError {
             }
             AppError::JwtError(err) => {
                 tracing::warn!("JWT error: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, 504, "JWT error".to_string())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    504,
+                    "JWT error".to_string(),
+                )
             }
             AppError::UnexpectedError(err) => {
                 tracing::error!("Unexpected error: {:?}", err);

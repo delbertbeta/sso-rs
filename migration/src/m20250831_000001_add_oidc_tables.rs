@@ -1,6 +1,8 @@
 use sea_orm_migration::prelude::*;
 
-use crate::{m20220101_000001_create_table::User, m20220807_132032_create_applications::Application};
+use crate::{
+    m20220101_000001_create_table::User, m20220807_132032_create_applications::Application,
+};
 
 pub struct Migration;
 
@@ -23,12 +25,32 @@ impl MigrationTrait for Migration {
                     .not_null()
                     .primary_key(),
             )
-            .col(ColumnDef::new(AuthorizationCode::ApplicationId).string().not_null())
-            .col(ColumnDef::new(AuthorizationCode::UserId).integer().not_null())
+            .col(
+                ColumnDef::new(AuthorizationCode::ApplicationId)
+                    .string()
+                    .not_null(),
+            )
+            .col(
+                ColumnDef::new(AuthorizationCode::UserId)
+                    .integer()
+                    .not_null(),
+            )
             .col(ColumnDef::new(AuthorizationCode::Scopes).json().not_null())
-            .col(ColumnDef::new(AuthorizationCode::RedirectUri).string().not_null())
-            .col(ColumnDef::new(AuthorizationCode::ExpiresAt).date_time().not_null())
-            .col(ColumnDef::new(AuthorizationCode::CreatedAt).date_time().not_null())
+            .col(
+                ColumnDef::new(AuthorizationCode::RedirectUri)
+                    .string()
+                    .not_null(),
+            )
+            .col(
+                ColumnDef::new(AuthorizationCode::ExpiresAt)
+                    .date_time()
+                    .not_null(),
+            )
+            .col(
+                ColumnDef::new(AuthorizationCode::CreatedAt)
+                    .date_time()
+                    .not_null(),
+            )
             .foreign_key(
                 sea_query::ForeignKey::create()
                     .name("fk-authcode-to-app-id")
@@ -63,8 +85,18 @@ impl MigrationTrait for Migration {
             )
             .col(ColumnDef::new(Token::ApplicationId).string().not_null())
             .col(ColumnDef::new(Token::UserId).integer().not_null())
-            .col(ColumnDef::new(Token::AccessToken).string().not_null().unique_key())
-            .col(ColumnDef::new(Token::RefreshToken).string().not_null().unique_key())
+            .col(
+                ColumnDef::new(Token::AccessToken)
+                    .string()
+                    .not_null()
+                    .unique_key(),
+            )
+            .col(
+                ColumnDef::new(Token::RefreshToken)
+                    .string()
+                    .not_null()
+                    .unique_key(),
+            )
             .col(ColumnDef::new(Token::Scopes).json().not_null())
             .col(ColumnDef::new(Token::ExpiresAt).date_time().not_null())
             .col(ColumnDef::new(Token::CreatedAt).date_time().not_null())
@@ -90,14 +122,24 @@ impl MigrationTrait for Migration {
         manager.create_table(token_table).await?;
 
         // Alter Application table
-        manager.alter_table(
-            Table::alter()
-                .table(Application::Table)
-                .drop_column(Alias::new("authorization_callback_url"))
-                .add_column(ColumnDef::new(ApplicationOidc::RedirectUris).json().not_null())
-                .add_column(ColumnDef::new(ApplicationOidc::GrantTypes).json().not_null())
-                .to_owned()
-        ).await
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Application::Table)
+                    .drop_column(Alias::new("authorization_callback_url"))
+                    .add_column(
+                        ColumnDef::new(ApplicationOidc::RedirectUris)
+                            .json()
+                            .not_null(),
+                    )
+                    .add_column(
+                        ColumnDef::new(ApplicationOidc::GrantTypes)
+                            .json()
+                            .not_null(),
+                    )
+                    .to_owned(),
+            )
+            .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
@@ -107,14 +149,20 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(Table::drop().table(Token::Table).to_owned())
             .await?;
-        manager.alter_table(
-            Table::alter()
-                .table(Application::Table)
-                .drop_column(ApplicationOidc::RedirectUris)
-                .drop_column(ApplicationOidc::GrantTypes)
-                .add_column(ColumnDef::new(Alias::new("authorization_callback_url")).string().not_null())
-                .to_owned()
-        ).await
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Application::Table)
+                    .drop_column(ApplicationOidc::RedirectUris)
+                    .drop_column(ApplicationOidc::GrantTypes)
+                    .add_column(
+                        ColumnDef::new(Alias::new("authorization_callback_url"))
+                            .string()
+                            .not_null(),
+                    )
+                    .to_owned(),
+            )
+            .await
     }
 }
 
