@@ -1,0 +1,13 @@
+.git
+.github
+.vscode
+.claude
+.env
+README.md
+api.md
+CLAUDE.md
+
+target/*
+!target/release/
+target/release/*
+!target/release/sso-rs
