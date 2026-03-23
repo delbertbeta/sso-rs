@@ -76,7 +76,6 @@ docker run -d \
 
 - `FRONT_END_URL` must be a valid public URL. The service derives the cookie root domain from it.
 - `PROD` is treated as a boolean flag by presence. Any non-empty value enables production mode.
-- `BUCKET_ENDPOINT` should be the R2 API endpoint root only, without the bucket name. The server uses path-style presigned URLs like `/BUCKET_NAME/object-key`.
 - `BUCKET_*` and `CDN_BASE_URL` are required because image upload paths depend on them.
 - The container does not start MySQL or Redis for you. Point the `.env` values at external services.
 - The Docker image now builds the Rust binary inside the container, so it no longer depends on the host machine's glibc version.
