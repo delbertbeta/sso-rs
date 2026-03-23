@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Docker operations**:
   ```bash
   docker build -t sso-rs .  # Build Docker image
-  # The Dockerfile expects the binary at ./target/release/sso-rs
+  # The Dockerfile builds the release binary in a multi-stage image build
   ```
 
 ## Required Environment Variables
@@ -106,7 +106,7 @@ Key entities:
 5. Access API at http://localhost:3000, gRPC at localhost:2999
 
 ### Docker Deployment
-- Multi-stage Dockerfile uses Ubuntu 24.04 base
+- Multi-stage Dockerfile builds on Debian bookworm and runs on Debian bookworm-slim
 - Exposes both HTTP (3000) and gRPC (2999) ports
 - CI/CD via GitHub Actions builds and publishes to Docker Hub
-- Binary expects release build with `cargo build --release`
+- Local host toolchain is not required for `docker build`
