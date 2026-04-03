@@ -76,7 +76,7 @@ pub async fn handler(
     session.expire_in(std::time::Duration::from_secs(SESSION_EXPIRES_TIME));
     let token = store.store_session(session).await?.unwrap();
 
-    let cookie = Cookie::build((SESSION_COOKIE_KEY, token))
+    let cookie = Cookie::build((SESSION_COOKIE_KEY.as_str(), token))
         .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
         .path("/")
         .domain(ROOT_DOMAIN.as_str())

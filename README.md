@@ -22,6 +22,7 @@ Create a `.env` file in the project root for local runs, or use the same file wi
 DATABASE_URL=mysql://username:password@mysql-host:3306/sso
 REDIS_URL=redis://default:password@redis-host:6379/1
 FRONT_END_URL=https://sso.example.com
+SESSION_COOKIE_KEY=delbertbeta-s-sso
 
 # Optional. If set, cookies are treated as production cookies.
 PROD=1
@@ -75,6 +76,7 @@ docker run -d \
 ### Notes
 
 - `FRONT_END_URL` must be a valid public URL. The service derives the cookie root domain from it.
+- `SESSION_COOKIE_KEY` defaults to `delbertbeta-s-sso` when omitted.
 - `PROD` is treated as a boolean flag by presence. Any non-empty value enables production mode.
 - `BUCKET_*` and `CDN_BASE_URL` are required because image upload paths depend on them.
 - The container does not start MySQL or Redis for you. Point the `.env` values at external services.
