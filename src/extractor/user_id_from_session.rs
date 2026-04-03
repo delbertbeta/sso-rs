@@ -35,7 +35,7 @@ where
 
         let session_cookie = cookie
             .as_ref()
-            .and_then(|cookie| cookie.get(SESSION_COOKIE_KEY))
+            .and_then(|cookie| cookie.get(SESSION_COOKIE_KEY.as_str()))
             .ok_or(ServiceError::LoginRequired)?;
 
         let session = store

@@ -3,7 +3,6 @@ use std::{collections::HashSet, env};
 use tldextract::TldOption;
 use url::Url;
 
-pub const SESSION_COOKIE_KEY: &str = "delbertbeta-s-sso";
 pub const RSA_PRIVATE_KEY_REDIS_KEY: &str = "rsa_private_key";
 
 pub struct Envs {
@@ -29,7 +28,13 @@ fn env_bool(name: &str) -> bool {
         .unwrap_or(false)
 }
 
+fn env_or_default(name: &str, default: &str) -> String {
+    env::var(name).unwrap_or_else(|_| default.to_string())
+}
+
 lazy_static! {
+    pub static ref SESSION_COOKIE_KEY: String =
+        env_or_default("SESSION_COOKIE_KEY", "delbertbeta-s-sso");
     pub static ref PARSED_FRONTEND_URL: Url = {
         let front_end_url = std::env::var("FRONT_END_URL").expect("FRONT_END_URL not defined");
         Url::parse(&front_end_url).expect("FRONT_END_URL is invalid")
@@ -72,4 +77,37 @@ lazy_static! {
     };
     pub static ref SUPPORT_IMAGE_TYPE: HashSet<&'static str> =
         HashSet::from(["gif", "bmp", "jpg", "jpeg", "png", "webp"]);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::env_or_default;
+
+    #[test]
+    fn env_or_default_reads_value_from_env() {
+        unsafe {
+            std::env::set_var("SESSION_COOKIE_KEY", "custom-sso-cookie");
+        }
+
+        assert_eq!(
+            env_or_default("SESSION_COOKIE_KEY", "delbertbeta-s-sso"),
+            "custom-sso-cookie"
+        );
+
+        unsafe {
+            std::env::remove_var("SESSION_COOKIE_KEY");
+        }
+    }
+
+    #[test]
+    fn env_or_default_falls_back_to_default() {
+        unsafe {
+            std::env::remove_var("SESSION_COOKIE_KEY");
+        }
+
+        assert_eq!(
+            env_or_default("SESSION_COOKIE_KEY", "delbertbeta-s-sso"),
+            "delbertbeta-s-sso"
+        );
+    }
 }

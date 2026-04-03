@@ -22,7 +22,7 @@ pub async fn handler(
     cookie: TypedHeader<Cookie>,
 ) -> Result<Response, AppError> {
     let session_cookie = &cookie
-        .get(SESSION_COOKIE_KEY)
+        .get(SESSION_COOKIE_KEY.as_str())
         .ok_or(ServiceError::LoginRequired)?;
 
     let mut session = store
@@ -32,7 +32,7 @@ pub async fn handler(
 
     session.destroy();
 
-    let cookie = cookie::Cookie::build((SESSION_COOKIE_KEY, "logout"))
+    let cookie = cookie::Cookie::build((SESSION_COOKIE_KEY.as_str(), "logout"))
         .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
         .path("/")
         .http_only(true)

@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - Online
+          - Staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add SSH host key
+        run: |
+          mkdir -p ~/.ssh
+          SSH_HOST="${{ secrets.SSH_DST }}"
+          SSH_HOST="${SSH_HOST#*@}"
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy online
+        if: ${{ inputs.environment == 'Online' }}
+        run: ssh "${{ secrets.SSH_DST }}" "${{ secrets.DEPLOY_COMMAND }}"
+
+      - name: Deploy staging
+        if: ${{ inputs.environment == 'Staging' }}
+        run: ssh "${{ secrets.SSH_DST }}" "${{ secrets.DEPLOY_STAGING_COMMAND }}"
