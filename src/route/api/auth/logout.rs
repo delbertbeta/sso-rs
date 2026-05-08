@@ -9,13 +9,24 @@ use http::{header, HeaderMap, HeaderValue, StatusCode};
 use serde::Serialize;
 
 use crate::{
-    constants::{PARSED_FRONTEND_URL, SESSION_COOKIE_KEY},
+    constants::{PARSED_FRONTEND_URL, ROOT_DOMAIN, SESSION_COOKIE_KEY},
     error::{AppError, ServiceError},
     response::OkResponse,
 };
 
 #[derive(Serialize)]
 pub struct SuccessResponse {}
+
+fn logout_cookie() -> cookie::Cookie<'static> {
+    cookie::Cookie::build((SESSION_COOKIE_KEY.as_str().to_owned(), "logout"))
+        .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
+        .path("/")
+        .domain(ROOT_DOMAIN.as_str())
+        .http_only(true)
+        .same_site(cookie::SameSite::Strict)
+        .max_age(cookie::time::Duration::seconds(0))
+        .build()
+}
 
 pub async fn handler(
     Extension(store): Extension<RedisSessionStore>,
@@ -32,13 +43,7 @@ pub async fn handler(
 
     session.destroy();
 
-    let cookie = cookie::Cookie::build((SESSION_COOKIE_KEY.as_str(), "logout"))
-        .secure(PARSED_FRONTEND_URL.scheme().eq("https"))
-        .path("/")
-        .http_only(true)
-        .same_site(cookie::SameSite::Strict)
-        .max_age(cookie::time::Duration::seconds(0))
-        .build();
+    let cookie = logout_cookie();
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -47,4 +52,20 @@ pub async fn handler(
     );
 
     Ok((StatusCode::OK, headers, OkResponse::new(SuccessResponse {})).into_response())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::logout_cookie;
+
+    #[test]
+    fn logout_cookie_matches_login_cookie_domain() {
+        unsafe {
+            std::env::set_var("FRONT_END_URL", "https://sso.example.com");
+        }
+
+        let cookie = logout_cookie();
+
+        assert_eq!(cookie.domain(), Some("example.com"));
+    }
 }
